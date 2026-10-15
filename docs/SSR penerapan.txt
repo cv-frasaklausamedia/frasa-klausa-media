@@ -1,0 +1,1 @@
+menerapkan Server-Side Rendering (SSR) pada halaman dashboard admin dan halaman publik. Buat persistent layout untuk komponen Navbar dan Sidebar agar tidak ikut re-render atau loading saat navigasi antar halaman. Selain itu, perbaiki semua loading skeleton agar dimensi, proporsi, dan posisinya persis menyesuaikan dengan komponen asli yang sedang dimuat.
