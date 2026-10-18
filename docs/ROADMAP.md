@@ -134,14 +134,14 @@ Hal-hal berikut merupakan **keputusan final** hasil klarifikasi PRD:
 **Referensi PRD:** §4, §10.1, §10.7, §10.11, §12, §19, §20, §21.
 
 **Deliverables**
-- [ ] Proyek Next.js 16.x (App Router, TS strict, Tailwind 4) via NPM.
-- [ ] Dependency sesuai PRD §4.2 terpasang (termasuk Tiptap, DOMPurify, cmdk, next-themes); `package-lock.json` ter-commit.
-- [ ] shadcn diinisialisasi (`components.json`), komponen dasar ditambahkan.
-- [ ] Struktur folder PRD §4.5 dibuat lengkap (termasuk route group `(public)`, `(auth)`, `(admin)`, `api/`, dan `src/middleware.ts`).
-- [ ] `src/configs/` untuk pembacaan & validasi env (zod); `env.example` terisi.
-- [ ] Provider tema tunggal (`next-themes`), `next/font`, token warna semantik.
-- [ ] Script NPM: `lint`, `typecheck`, `test`, `build`.
-- [ ] `.gitignore` menutup `.env.local`; konfigurasi MCP/Context7 siap.
+- [x] Proyek Next.js 16.x (App Router, TS strict, Tailwind 4) via NPM.
+- [x] Dependency sesuai PRD §4.2 terpasang (termasuk Tiptap, DOMPurify, cmdk, next-themes); `package-lock.json` ter-commit.
+- [x] shadcn diinisialisasi (`components.json`), komponen dasar ditambahkan.
+- [x] Struktur folder PRD §4.5 dibuat lengkap (termasuk route group `(public)`, `(auth)`, `(admin)`, `api/`, dan `src/middleware.ts`).
+- [x] `src/configs/` untuk pembacaan & validasi env (zod); `env.example` terisi.
+- [x] Provider tema tunggal (`next-themes`), `next/font`, token warna semantik.
+- [x] Script NPM: `lint`, `typecheck`, `test`, `build`.
+- [x] `.gitignore` menutup `.env.local`; konfigurasi MCP/Context7 siap.
 
 **Prompt**
 
