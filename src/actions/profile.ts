@@ -5,8 +5,8 @@ import { requireAdmin } from '@/lib/auth';
 import {
   updateProfileSchema,
   updatePasswordSchema,
-  ALLOWED_AVATAR_MIME_TYPES,
   MAX_AVATAR_SIZE_BYTES,
+  validateImageMagicBytes,
 } from '@/validations/profile';
 import {
   actionError,
@@ -128,42 +128,57 @@ export async function uploadAvatarAction(
 ): Promise<ActionResponse<{ avatarUrl: string }>> {
   try {
     const user = await requireAdmin();
-    const file = formData.get('avatar') as File | null;
+    const file = formData.get('avatar');
 
-    if (!file || !(file instanceof File) || file.size === 0) {
+    if (
+      !file ||
+      typeof file !== 'object' ||
+      !('size' in file) ||
+      typeof (file as Blob).arrayBuffer !== 'function' ||
+      (file as Blob).size === 0
+    ) {
       return actionError('Silakan pilih berkas avatar untuk diunggah.', 'VALIDATION_ERROR', 400);
     }
 
-    if (file.size > MAX_AVATAR_SIZE_BYTES) {
+    const blobFile = file as Blob & { name?: string; type?: string };
+
+    if (blobFile.size > MAX_AVATAR_SIZE_BYTES) {
       return actionError('Ukuran berkas avatar maksimal 2 MB.', 'BAD_REQUEST', 400);
     }
 
-    if (!ALLOWED_AVATAR_MIME_TYPES.includes(file.type as (typeof ALLOWED_AVATAR_MIME_TYPES)[number])) {
+    // 1. Ekstrak buffer berkas
+    const arrayBuffer = await blobFile.arrayBuffer();
+    const fileBuffer = Buffer.from(arrayBuffer);
+
+    // 2. Validasi konten biner nyata (magic bytes) per PRD §14.5
+    const { isValid, canonicalMime, ext } = validateImageMagicBytes(fileBuffer);
+    if (!isValid || !canonicalMime || !ext) {
       return actionError(
-        'Format berkas tidak didukung. Harap gunakan format JPEG, PNG, atau WebP.',
+        'Format berkas tidak didukung atau berkas rusak. Harap gunakan format JPEG, PNG, atau WebP yang valid.',
         'BAD_REQUEST',
         400
       );
     }
 
     const supabase = await createClient();
-    const fileExt = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
     const objectUuid = crypto.randomUUID();
-    const filePath = `${user.id}/${objectUuid}.${fileExt}`;
+    const filePath = `${user.id}/${objectUuid}.${ext}`;
 
-    // 1. Unggah ke Supabase Storage
-    const arrayBuffer = await file.arrayBuffer();
-    const fileBuffer = Buffer.from(arrayBuffer);
-
+    // 3. Unggah ke Supabase Storage dengan Canonical MIME Type
     const { error: uploadError } = await supabase.storage
       .from('avatars')
       .upload(filePath, fileBuffer, {
-        contentType: file.type,
+        contentType: canonicalMime,
         upsert: false,
       });
 
     if (uploadError) {
-      return actionError('Gagal mengunggah avatar ke media storage.', 'INTERNAL_SERVER_ERROR', 500);
+      console.error('[uploadAvatarAction] Supabase storage upload error:', uploadError);
+      return actionError(
+        'Gagal mengunggah avatar ke media storage: ' + (uploadError.message || 'Terjadi kesalahan sistem.'),
+        'INTERNAL_SERVER_ERROR',
+        500
+      );
     }
 
     // Dapatkan Public URL

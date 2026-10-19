@@ -40,7 +40,10 @@ export function AvatarUploadCard({ currentAvatarUrl, fullName }: AvatarUploadCar
       return;
     }
 
-    if (!ALLOWED_AVATAR_MIME_TYPES.includes(file.type as (typeof ALLOWED_AVATAR_MIME_TYPES)[number])) {
+    const isAllowedMime = ALLOWED_AVATAR_MIME_TYPES.includes(file.type as (typeof ALLOWED_AVATAR_MIME_TYPES)[number]);
+    const isAllowedExt = /\.(jpe?g|png|webp)$/i.test(file.name);
+
+    if (!isAllowedMime && !isAllowedExt) {
       toast.error('Hanya format JPG, PNG, atau WebP yang diperbolehkan.');
       return;
     }
@@ -64,8 +67,9 @@ export function AvatarUploadCard({ currentAvatarUrl, fullName }: AvatarUploadCar
         toast.error(response.error.message || 'Gagal mengunggah avatar.');
         setPreviewUrl(currentAvatarUrl); // Kembalikan ke URL semula jika gagal
       }
-    } catch {
-      toast.error('Terjadi kesalahan jaringan saat mengunggah foto.');
+    } catch (err) {
+      console.error('[AvatarUploadCard] Upload network/server error:', err);
+      toast.error('Terjadi kesalahan jaringan atau batasan server saat mengunggah foto.');
       setPreviewUrl(currentAvatarUrl);
     } finally {
       setIsUploading(false);
