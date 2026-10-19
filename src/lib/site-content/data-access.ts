@@ -1,5 +1,5 @@
 import { unstable_cache } from '../cache.ts';
-import { createClient } from '../supabase/server.ts';
+import { createClient, createPublicClient } from '../supabase/server.ts';
 import type { SiteContentKey, SiteContentPayloadMap } from './types.ts';
 import { DEFAULT_SITE_CONTENT_MAP } from './defaults.ts';
 
@@ -15,7 +15,7 @@ export async function getSiteContentRecord<K extends SiteContentKey>(
   const fallback = DEFAULT_SITE_CONTENT_MAP[key];
 
   try {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from('site_content')
       .select('payload')

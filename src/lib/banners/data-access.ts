@@ -1,5 +1,5 @@
 import { unstable_cache } from '../cache.ts';
-import { createClient } from '../supabase/server.ts';
+import { createClient, createPublicClient } from '../supabase/server.ts';
 import type { Banner } from '../../types/index.ts';
 import type { BannerFormValues, BannerQueryParams } from '../../validations/banner.ts';
 import type {
@@ -201,7 +201,7 @@ export async function toggleBannerActiveRecord(
  * Limit: 1 record
  */
 export async function getActiveBannerFromDb(nowIso: string): Promise<Banner | null> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const { data, error } = await supabase
     .from('banners')

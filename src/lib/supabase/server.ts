@@ -29,3 +29,26 @@ export async function createClient(): Promise<SupabaseClient<Database>> {
     }
   ) as unknown as SupabaseClient<Database>;
 }
+
+/**
+ * Supabase Public Client (Anonymous, Cookie-Free)
+ *
+ * Digunakan khusus untuk operasi pembacaan data publik di server
+ * (misal: getActiveBanner, getSiteContent, public catalog cache).
+ * Karena tidak membaca cookies(), fungsi ini aman dipanggil di dalam
+ * unstable_cache() dan selama proses static build prerendering.
+ */
+export function createPublicClient(): SupabaseClient<Database> {
+  return createServerClient<Database>(
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      cookies: {
+        getAll() {
+          return [];
+        },
+        setAll() {},
+      },
+    }
+  ) as unknown as SupabaseClient<Database>;
+}
