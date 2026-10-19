@@ -7,14 +7,11 @@ export * from './types';
 export * from './memory';
 export * from './supabase';
 
-/**
- * Konfigurasi standar Rate Limit Login:
- * Maksimal 5 percobaan dalam kurun waktu 15 menit (900 detik).
- */
-export const AUTH_RATE_LIMIT_CONFIG: RateLimitConfig = {
-  limit: 5,
-  windowSeconds: 15 * 60,
-};
+import {
+  AUTH_RATE_LIMIT_CONFIG,
+  USER_CREATE_RATE_LIMIT_CONFIG,
+  USER_RESET_RATE_LIMIT_CONFIG,
+} from './types';
 
 /**
  * Factory untuk membuat instance RateLimiter sesuai kebutuhan runtime.
@@ -33,6 +30,16 @@ export function createRateLimiter(
  * Instance Rate Limiter khusus alur autentikasi
  */
 export const authRateLimiter = createRateLimiter(AUTH_RATE_LIMIT_CONFIG);
+
+/**
+ * Instance Rate Limiter untuk pembuatan user admin baru
+ */
+export const userCreateRateLimiter = createRateLimiter(USER_CREATE_RATE_LIMIT_CONFIG);
+
+/**
+ * Instance Rate Limiter untuk reset password user
+ */
+export const userResetRateLimiter = createRateLimiter(USER_RESET_RATE_LIMIT_CONFIG);
 
 /**
  * Mengekstrak alamat IP klien dari request headers Next.js

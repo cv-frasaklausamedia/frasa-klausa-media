@@ -19,6 +19,7 @@ export interface Database {
       profiles: {
         Row: {
           id: string;
+          email: string | null;
           full_name: string;
           avatar_url: string | null;
           role: UserRole;
@@ -28,6 +29,7 @@ export interface Database {
         };
         Insert: {
           id: string;
+          email?: string | null;
           full_name: string;
           avatar_url?: string | null;
           role?: UserRole;
@@ -37,6 +39,7 @@ export interface Database {
         };
         Update: {
           id?: string;
+          email?: string | null;
           full_name?: string;
           avatar_url?: string | null;
           role?: UserRole;
@@ -428,9 +431,85 @@ export interface Database {
         };
         Relationships: [];
       };
+      audit_logs: {
+        Row: {
+          id: string;
+          actor_id: string | null;
+          action: string;
+          target_type: string;
+          target_id: string | null;
+          status: string;
+          metadata: Json;
+          ip_address: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          actor_id?: string | null;
+          action: string;
+          target_type: string;
+          target_id?: string | null;
+          status?: string;
+          metadata?: Json;
+          ip_address?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          actor_id?: string | null;
+          action?: string;
+          target_type?: string;
+          target_id?: string | null;
+          status?: string;
+          metadata?: Json;
+          ip_address?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'audit_logs_actor_id_fkey';
+            columns: ['actor_id'];
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
+      system_settings: {
+        Row: {
+          key: string;
+          value: Json;
+          description: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          key: string;
+          value: Json;
+          description?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          key?: string;
+          value?: Json;
+          description?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
-      [_ in never]: never;
+      pengaturan: {
+        Row: {
+          key: string;
+          value: Json;
+          description: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       is_active_admin: {
