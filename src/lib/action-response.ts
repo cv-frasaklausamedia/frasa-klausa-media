@@ -145,6 +145,24 @@ export function handleActionError(error: unknown): ActionResponse<never> {
     });
 
     switch (pgError.code) {
+      case '42501': // insufficient_privilege
+        return actionError(
+          'Akses ditolak: Anda tidak memiliki wewenang untuk tindakan ini.',
+          'FORBIDDEN',
+          403
+        );
+      case 'P0002': // no_data_found
+        return actionError(
+          'Data yang diminta tidak ditemukan.',
+          'NOT_FOUND',
+          404
+        );
+      case '22023': // invalid_parameter_value
+        return actionError(
+          pgError.message || 'Parameter atau batasan nilai yang dimasukkan tidak valid.',
+          'BAD_REQUEST',
+          400
+        );
       case '23505': // unique_violation
         return actionError(
           'Data yang dimasukkan sudah ada dan tidak boleh duplikat.',

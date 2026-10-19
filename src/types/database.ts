@@ -205,6 +205,7 @@ export interface Database {
           id: string;
           book_id: string;
           image_url: string;
+          alt_text: string;
           sort_order: number;
           created_at: string;
         };
@@ -212,6 +213,7 @@ export interface Database {
           id?: string;
           book_id: string;
           image_url: string;
+          alt_text?: string;
           sort_order?: number;
           created_at?: string;
         };
@@ -219,6 +221,7 @@ export interface Database {
           id?: string;
           book_id?: string;
           image_url?: string;
+          alt_text?: string;
           sort_order?: number;
           created_at?: string;
         };
@@ -452,6 +455,38 @@ export interface Database {
           published_at: string | null;
           similarity_score: number;
         }[];
+      };
+      upsert_book_atomic: {
+        Args: {
+          p_book_id: string | null;
+          p_title: string;
+          p_slug: string;
+          p_description: string;
+          p_cover_url: string | null;
+          p_category_id: string;
+          p_author: string;
+          p_editor: string | null;
+          p_publisher: string;
+          p_publish_year: number;
+          p_isbn: string | null;
+          p_page_count: number;
+          p_price_regular: number;
+          p_price_promo: number | null;
+          p_is_featured: boolean;
+          p_is_published: boolean;
+          p_shopee_url: string | null;
+          p_tokopedia_url: string | null;
+          p_whatsapp_number: string;
+          p_whatsapp_message_template: string | null;
+          p_seo_title: string | null;
+          p_seo_description: string | null;
+          p_gallery_images?: Json;
+          p_related_book_ids?: string[];
+        };
+        Returns: {
+          book_id: string;
+          unused_image_urls: string[];
+        };
       };
     };
     Enums: {

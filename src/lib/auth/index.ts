@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { connection } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { AuthError } from '@/lib/action-response';
@@ -13,10 +14,11 @@ export * from './guards';
 /**
  * Mengambil data pengguna aktif saat ini tanpa melempar exception.
  * Mengembalikan null jika belum login, profil tidak ada, atau akun nonaktif.
+ * Dibungkus dengan React.cache() untuk per-request deduplication.
  */
-export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
+export const getCurrentUser = cache(async function getCurrentUser(): Promise<AuthenticatedUser | null> {
+  await connection();
   try {
-    await connection();
     const supabase = await createClient();
     const {
       data: { user },
@@ -46,13 +48,14 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
     console.error('[getCurrentUser] Error fetching current user:', error);
     return null;
   }
-}
+});
 
 /**
  * Memastikan pengguna memiliki sesi aktif dan akun berstatus aktif.
  * Melempar AuthError (401 atau 403) jika tidak memenuhi syarat.
+ * Dibungkus dengan React.cache() untuk per-request deduplication.
  */
-export async function requireUser(): Promise<AuthenticatedUser> {
+export const requireUser = cache(async function requireUser(): Promise<AuthenticatedUser> {
   await connection();
   const supabase = await createClient();
   const {
@@ -75,20 +78,23 @@ export async function requireUser(): Promise<AuthenticatedUser> {
   }
 
   return validateUserProfile(user, profile);
-}
+});
 
 /**
  * Memastikan pengguna adalah Admin aktif (role: 'admin' atau 'super_admin').
+ * Dibungkus dengan React.cache() untuk per-request deduplication.
  */
-export async function requireAdmin(): Promise<AuthenticatedUser> {
+export const requireAdmin = cache(async function requireAdmin(): Promise<AuthenticatedUser> {
   const user = await requireUser();
   return validateAdminRole(user);
-}
+});
 
 /**
  * Memastikan pengguna adalah Super Admin aktif (role: 'super_admin').
+ * Dibungkus dengan React.cache() untuk per-request deduplication.
  */
-export async function requireSuperAdmin(): Promise<AuthenticatedUser> {
+export const requireSuperAdmin = cache(async function requireSuperAdmin(): Promise<AuthenticatedUser> {
   const user = await requireUser();
   return validateSuperAdminRole(user);
-}
+});
+

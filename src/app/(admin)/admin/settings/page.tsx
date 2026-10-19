@@ -1,13 +1,14 @@
 import { Suspense } from 'react';
 import { connection } from 'next/server';
+import type { Metadata } from 'next';
+import { Settings } from 'lucide-react';
 import { requireSuperAdmin } from '@/lib/auth';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings, ShieldAlert } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { UnderDevelopment } from '@/components/admin/under-development';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Pengaturan Sistem — Super Admin Frasa Klausa Media',
+  description: 'Konfigurasi preferensi global, integrasi pihak ketiga, dan pengaturan platform Frasa Klausa Media.',
 };
 
 async function SettingsContent() {
@@ -15,43 +16,35 @@ async function SettingsContent() {
   await requireSuperAdmin();
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Settings className="h-6 w-6 text-primary" /> Pengaturan Sistem
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Konfigurasi preferensi global, integrasi pihak ketiga, dan pengaturan platform.
-          </p>
-        </div>
-        <Badge variant="outline" className="w-fit font-mono text-xs gap-1.5 py-1 px-3 border-amber-500/30 text-amber-600 dark:text-amber-400">
-          <ShieldAlert className="h-3.5 w-3.5" /> Khusus Super Admin
-        </Badge>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base font-semibold">Konfigurasi Global Platform</CardTitle>
-          <CardDescription className="text-xs">
-            Halaman ini diproteksi secara ketat dengan <code className="font-mono text-primary">requireSuperAdmin()</code>.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-lg border border-dashed border-border p-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              Pengaturan kontak & sosmed default, integrasi analytics, dan pengaturan lanjutan platform akan diaktifkan pada <strong>Tahap 8 (Akun & Pengaturan)</strong>.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <UnderDevelopment
+      title="Pengaturan Sistem & Platform"
+      description="Konfigurasi preferensi operasional platform, integrasi analitik pihak ketiga, keamanan sesi, dan pengaturan global Frasa Klausa Media."
+      icon={Settings}
+      isSuperAdminOnly={true}
+      badgeText="Khusus Super Admin"
+      estimatedPhase="Tahap 8 — Manajemen Akun & Pengaturan Sistem"
+      plannedFeatures={[
+        'Konfigurasi data default kontak penerbit, nomor WhatsApp utama, dan alamat operasional kantor',
+        'Pengaturan durasi sesi login, batas percobaan gagal masuk, dan interval keep-alive basis data',
+        'Integrasi analitik web pihak ketiga (Google Analytics / Search Console meta verification)',
+        'Mode pemeliharaan sistem (Maintenance Mode) terjadwal untuk pembaruan besar',
+        'Pengaturan batas unggah berkas sampul buku dan dokumen naskah pada Supabase Storage',
+        'Pencadangan konfigurasi sistem dan manajemen environment variabel aplikasi',
+      ]}
+    />
   );
 }
 
 export default function AdminSettingsPage() {
   return (
-    <Suspense fallback={<div className="space-y-4 max-w-5xl mx-auto p-4"><Skeleton className="h-10 w-48" /><Skeleton className="h-40 w-full" /></div>}>
+    <Suspense
+      fallback={
+        <div className="space-y-4 max-w-5xl">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-64 w-full rounded-xl" />
+        </div>
+      }
+    >
       <SettingsContent />
     </Suspense>
   );

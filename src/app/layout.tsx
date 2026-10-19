@@ -30,6 +30,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var m=document.cookie.match(/(?:^|; )sidebar_state=([^;]*)/);if(m&&decodeURIComponent(m[1])==='false'){document.documentElement.dataset.sidebar='collapsed';}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className={`${fontSans.variable} ${fontSerif.variable} antialiased min-h-screen bg-background text-foreground`}>
         <AppProviders>
           {children}

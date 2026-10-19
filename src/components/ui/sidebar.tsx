@@ -28,7 +28,6 @@ import {
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 365 // 1 year (PRD §16.6)
 const SIDEBAR_WIDTH = "16rem" // 256px
-const SIDEBAR_WIDTH_MOBILE = "18rem" // 288px
 const SIDEBAR_WIDTH_ICON = "4.5rem" // 72px
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
@@ -79,7 +78,7 @@ export const SidebarProvider = React.forwardRef<HTMLDivElement, SidebarProviderP
     const { isMobile, isTablet, isDesktop } = useResponsiveBreakpoints()
     const [openMobile, setOpenMobile] = React.useState(false)
 
-    // State preferensi desktop (disinkronkan dengan cookie)
+    // State preferensi desktop (disinkronkan dengan cookie dan dataset html)
     const [_open, _setOpen] = React.useState(defaultOpen)
     const open = openProp ?? _open
 
@@ -92,22 +91,27 @@ export const SidebarProvider = React.forwardRef<HTMLDivElement, SidebarProviderP
           _setOpen(openState)
         }
 
-        // Simpan preferensi desktop di browser cookie (PRD §16.6)
+        // Simpan preferensi desktop di browser cookie & data-sidebar html
         if (typeof document !== "undefined") {
           document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}; SameSite=Lax`
+          if (openState) {
+            delete document.documentElement.dataset.sidebar
+          } else {
+            document.documentElement.dataset.sidebar = "collapsed"
+          }
         }
       },
       [setOpenProp, open]
     )
 
-    // Helper toggle sidebar adaptif berdasarkan breakpoint
+    // Helper toggle sidebar
     const toggleSidebar = React.useCallback(() => {
-      if (isMobile || isTablet) {
+      if (typeof window !== "undefined" && window.innerWidth < 768) {
         setOpenMobile((prev) => !prev)
       } else {
         setOpen((prev) => !prev)
       }
-    }, [isMobile, isTablet, setOpen, setOpenMobile])
+    }, [setOpen, setOpenMobile])
 
     // Keyboard shortcut (Ctrl + B / Cmd + B)
     React.useEffect(() => {
@@ -125,17 +129,8 @@ export const SidebarProvider = React.forwardRef<HTMLDivElement, SidebarProviderP
       return () => window.removeEventListener("keydown", handleKeyDown)
     }, [toggleSidebar])
 
-    // Tutup mobile drawer saat beralih ke viewport desktop
-    React.useEffect(() => {
-      if (isDesktop && openMobile) {
-        setOpenMobile(false)
-      }
-    }, [isDesktop, openMobile])
-
-    // State kalkulasi:
-    // Pada desktop: mengikuti nilai 'open' (expanded/collapsed)
-    // Pada tablet & mobile: sidebar dock selalu collapsed (72px)
-    const state: SidebarState = isDesktop && open ? "expanded" : "collapsed"
+    // State murni mengikuti nilai open SSR/client, tanpa menunggu JS matchMedia
+    const state: SidebarState = open ? "expanded" : "collapsed"
 
     const contextValue = React.useMemo<SidebarContextProps>(
       () => ({
@@ -232,7 +227,7 @@ export const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
           </SheetContent>
         </Sheet>
 
-        {/* Desktop & Tablet Docked Sidebar (Normal Flex Flow, Sticky Top-0, Anti-Overlap) */}
+        {/* Desktop & Tablet Docked Sidebar (Fixed Position di sisi kiri, h-screen, scroll mandiri) */}
         <aside
           ref={ref}
           data-state={state}
@@ -240,14 +235,9 @@ export const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
           data-variant={variant}
           data-side={side}
           className={cn(
-            "group peer hidden md:flex flex-col sticky top-0 h-screen shrink-0 z-20 border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-300 ease-in-out overflow-hidden",
-            state === "expanded" ? "w-64" : "w-[72px]",
+            "group peer hidden md:flex flex-col fixed inset-y-0 left-0 z-30 h-screen border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-300 ease-in-out overflow-hidden md:w-[72px] xl:w-64 xl:sidebar-collapsed:w-[72px]",
             className
           )}
-          style={{
-            width: state === "expanded" ? SIDEBAR_WIDTH : SIDEBAR_WIDTH_ICON,
-            ...props.style,
-          }}
           {...props}
         >
           <div
@@ -267,42 +257,51 @@ export const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
-  const { toggleSidebar, isMobile, isTablet, openMobile, state } = useSidebar()
-  const isExpanded = isMobile || isTablet ? openMobile : state === "expanded"
-
-  const ariaLabel = isMobile || isTablet
-    ? openMobile
-      ? "Tutup navigasi drawer"
-      : "Buka navigasi drawer"
-    : state === "expanded"
-      ? "Ciutkan navigasi sidebar"
-      : "Bentangkan navigasi sidebar"
+  const { toggleSidebar, openMobile, state } = useSidebar()
 
   return (
-    <Button
-      ref={ref}
-      data-sidebar="trigger"
-      variant="ghost"
-      size="icon"
-      aria-label={ariaLabel}
-      aria-expanded={isExpanded}
-      className={cn("h-8 w-8 text-foreground", className)}
-      onClick={(event) => {
-        onClick?.(event)
-        toggleSidebar()
-      }}
-      {...props}
-    >
-      {isMobile ? (
+    <>
+      {/* Mobile Drawer Hamburger Trigger (< 768px) */}
+      <Button
+        ref={ref}
+        data-sidebar="trigger-mobile"
+        variant="ghost"
+        size="icon"
+        aria-label={openMobile ? "Tutup navigasi drawer" : "Buka navigasi drawer"}
+        aria-expanded={openMobile}
+        className={cn("h-8 w-8 text-foreground md:hidden", className)}
+        onClick={(event) => {
+          onClick?.(event)
+          toggleSidebar()
+        }}
+        {...props}
+      >
         <Menu className="h-5 w-5" />
-      ) : (
+        <span className="sr-only">Toggle Drawer</span>
+      </Button>
+
+      {/* Desktop Collapse/Expand Trigger (>= 1280px) */}
+      <Button
+        data-sidebar="trigger-desktop"
+        variant="ghost"
+        size="icon"
+        aria-label={state === "expanded" ? "Ciutkan navigasi sidebar" : "Bentangkan navigasi sidebar"}
+        aria-expanded={state === "expanded"}
+        className={cn("h-8 w-8 text-foreground hidden xl:inline-flex", className)}
+        onClick={(event) => {
+          onClick?.(event)
+          toggleSidebar()
+        }}
+        {...props}
+      >
         <PanelLeft className="h-5 w-5" />
-      )}
-      <span className="sr-only">Toggle Sidebar</span>
-    </Button>
+        <span className="sr-only">Toggle Sidebar</span>
+      </Button>
+    </>
   )
 })
 SidebarTrigger.displayName = "SidebarTrigger"
+
 
 export const SidebarRail = React.forwardRef<
   HTMLButtonElement,
@@ -336,7 +335,7 @@ export const SidebarInset = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "relative flex w-full flex-1 min-w-0 flex-col bg-background",
+        "relative flex min-h-screen w-full flex-1 min-w-0 flex-col bg-background transition-[padding] duration-300 ease-in-out md:pl-[72px] xl:pl-64 xl:sidebar-collapsed:pl-[72px]",
         className
       )}
       {...props}

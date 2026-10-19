@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant sidebar-collapsed (&:where([data-sidebar="collapsed"] *));
 
 @theme inline {
   --font-serif: var(--font-serif);
