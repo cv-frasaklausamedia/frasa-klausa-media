@@ -2,12 +2,14 @@
 
 import * as React from 'react';
 
-export function DynamicCopyright({ companyName }: { companyName: string }) {
-  const [year, setYear] = React.useState<number>(2026);
+const emptySubscribe = () => () => {};
 
-  React.useEffect(() => {
-    setYear(new Date().getFullYear());
-  }, []);
+export function DynamicCopyright({ companyName }: { companyName: string }) {
+  const year = React.useSyncExternalStore(
+    emptySubscribe,
+    () => new Date().getFullYear(),
+    () => 2026
+  );
 
   return (
     <span>

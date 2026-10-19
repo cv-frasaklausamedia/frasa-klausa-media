@@ -273,13 +273,13 @@ berurutan dari nol tanpa error.
 **Referensi PRD:** §6.1, §9.3, §13, §14.1, §15.2–15.6, §15.9–15.12, §16.5.
 
 **Deliverables**
-- [ ] Helper Supabase browser/server/middleware di `src/lib/supabase`; client service-role terpisah dan server-only.
-- [ ] `src/middleware.ts`: refresh session + gate `/admin` & `/login` berbasis session & role.
-- [ ] Halaman login (`(auth)`), server action login/logout, open-redirect aman.
-- [ ] Helper authorization reusable (`requireUser`, `requireAdmin`, `requireSuperAdmin`) yang cek data terbaru di DB (termasuk `is_active`).
-- [ ] Rate limit untuk login & endpoint publik mutatif.
-- [ ] Security headers (CSP, nosniff, Referrer-Policy, Permissions-Policy, frame-ancestors; HSTS hanya production).
-- [ ] Pola response error/aksi yang konsisten & aman.
+- [x] Helper Supabase browser/server/middleware di `src/lib/supabase`; client service-role terpisah dan server-only.
+- [x] `src/middleware.ts`: refresh session + gate `/admin` & `/login` berbasis session & role.
+- [x] Halaman login (`(auth)`), server action login/logout, open-redirect aman.
+- [x] Helper authorization reusable (`requireUser`, `requireAdmin`, `requireSuperAdmin`) yang cek data terbaru di DB (termasuk `is_active`).
+- [x] Rate limit untuk login & endpoint publik mutatif.
+- [x] Security headers (CSP, nosniff, Referrer-Policy, Permissions-Policy, frame-ancestors; HSTS hanya production).
+- [x] Pola response error/aksi yang konsisten & aman.
 
 **Prompt**
 

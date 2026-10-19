@@ -1,58 +1,59 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Suspense } from 'react';
+import { connection } from 'next/server';
+import { requireAdmin } from '@/lib/auth';
+import { getDashboardMetrics, getBooksPerCategoryStats } from '@/lib/dashboard';
+import { DashboardMetricsCards } from '@/components/admin/dashboard-metrics';
+import { LazyDashboardChart } from '@/components/admin/lazy-dashboard-chart';
+import { Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Layers, BookCheck, FileText } from 'lucide-react';
+import AdminDashboardLoading from './loading';
 
-export default function AdminPage() {
+export const metadata = {
+  title: 'Dashboard — Admin Frasa Klausa Media',
+};
+
+async function DashboardContent() {
+  await connection();
+  const user = await requireAdmin();
+
+  // Ambil data agregasi di server secara efisien dan paralel
+  const [metrics, chartData] = await Promise.all([
+    getDashboardMetrics(),
+    getBooksPerCategoryStats(),
+  ]);
+
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Header Halaman */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-serif font-bold tracking-tight text-foreground">
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-foreground">
             Ringkasan Dashboard
           </h1>
-          <p className="text-muted-foreground">
-            Selamat datang di Content Management System Frasa Klausa Media.
+          <p className="text-sm text-muted-foreground mt-1">
+            Selamat datang kembali, <span className="font-medium text-foreground">{user.fullName}</span>. Kelola katalog dan media literasi Anda dari panel ini.
           </p>
         </div>
-        <Badge variant="outline" className="gap-1 border-primary/40 text-primary">
-          <Sparkles className="h-3 w-3" /> Tahap 0 Siap
+        <Badge variant="outline" className="gap-1 border-primary/40 text-primary w-fit">
+          <Sparkles className="h-3.5 w-3.5" /> Shell Admin Siap
         </Badge>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Katalog Buku</CardTitle>
-            <BookCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0 Buku</div>
-            <p className="text-xs text-muted-foreground mt-1">Dikelola di Tahap 5</p>
-          </CardContent>
-        </Card>
+      {/* 4 Kartu Metrik Utama */}
+      <DashboardMetricsCards metrics={metrics} />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Artikel Blog</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0 Artikel</div>
-            <p className="text-xs text-muted-foreground mt-1">Dikelola di Tahap 6</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Kategori</CardTitle>
-            <Layers className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0 Kategori</div>
-            <p className="text-xs text-muted-foreground mt-1">Dikelola di Tahap 4</p>
-          </CardContent>
-        </Card>
+      {/* Grafik Sebaran Buku per Kategori */}
+      <div className="grid gap-6">
+        <LazyDashboardChart data={chartData} />
       </div>
     </div>
+  );
+}
+
+export default function AdminDashboardPage() {
+  return (
+    <Suspense fallback={<AdminDashboardLoading />}>
+      <DashboardContent />
+    </Suspense>
   );
 }
