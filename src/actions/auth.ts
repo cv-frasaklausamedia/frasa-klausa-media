@@ -11,6 +11,8 @@ import {
   handleActionError,
   type ActionResponse,
 } from '@/lib/action-response';
+import { logger } from '@/lib/logger';
+import { captureSecurityEvent } from '@/lib/monitoring';
 
 /**
  * Server Action: signInAction
@@ -46,11 +48,17 @@ export async function signInAction(
     const { email, password, redirectTo } = validation.data;
 
     // 2. Proteksi Brute Force / Rate Limiting per IP + Email
+    const startTime = Date.now();
     const clientIp = await getClientIp();
     const rateLimitKey = `login:${clientIp}:${email.toLowerCase()}`;
     const rateLimitResult = await authRateLimiter.limit(rateLimitKey);
 
     if (!rateLimitResult.success) {
+      captureSecurityEvent('Login brute force rate limit triggered', {
+        action: 'signInAction',
+        status: 429,
+        metadata: { clientIp, emailDomain: email.split('@')[1] },
+      });
       return actionError(
         'Terlalu banyak percobaan login. Silakan tunggu beberapa saat sebelum mencoba kembali.',
         'TOO_MANY_REQUESTS',
@@ -69,6 +77,12 @@ export async function signInAction(
     const GENERIC_AUTH_ERROR = 'Email atau kata sandi tidak valid.';
 
     if (authError || !authData.user) {
+      captureSecurityEvent('Failed login attempt', {
+        action: 'signInAction',
+        status: 401,
+        durationMs: Date.now() - startTime,
+        metadata: { clientIp, emailDomain: email.split('@')[1] },
+      });
       return actionError(GENERIC_AUTH_ERROR, 'UNAUTHORIZED', 401);
     }
 
@@ -84,11 +98,26 @@ export async function signInAction(
     if (profileError || !profileRecord || !profileRecord.is_active) {
       // Segera batalkan sesi jika akun dinonaktifkan atau profil tidak sah
       await supabase.auth.signOut();
+      captureSecurityEvent('Login attempt on inactive or missing account', {
+        action: 'signInAction',
+        status: 401,
+        actorId: authData.user.id,
+        durationMs: Date.now() - startTime,
+        metadata: { clientIp },
+      });
       return actionError(GENERIC_AUTH_ERROR, 'UNAUTHORIZED', 401);
     }
 
     // 5. Validasi parameter redirect (hanya boleh path internal admin)
     const safeTarget = getSafeRedirectUrl(redirectTo, '/admin');
+
+    logger.info('User authenticated successfully', {
+      action: 'signInAction',
+      status: 200,
+      actorId: authData.user.id,
+      durationMs: Date.now() - startTime,
+      metadata: { role: profileRecord.role },
+    });
 
     return actionSuccess({ redirectTo: safeTarget });
   } catch (error) {
@@ -103,6 +132,13 @@ export async function signInAction(
  */
 export async function signOutAction(): Promise<void> {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    logger.info('User signed out', {
+      action: 'signOutAction',
+      actorId: user.id,
+    });
+  }
   await supabase.auth.signOut();
   redirect('/login');
 }

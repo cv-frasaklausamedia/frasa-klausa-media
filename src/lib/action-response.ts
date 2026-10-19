@@ -1,4 +1,6 @@
 import { ZodError } from 'zod';
+import { logger } from './logger/index.ts';
+import { captureException } from './monitoring.ts';
 
 export type ActionErrorCode =
   | 'BAD_REQUEST'           // 400
@@ -109,6 +111,11 @@ export function actionError(
 export function handleActionError(error: unknown): ActionResponse<never> {
   // 1. Error yang sengaja dilempar oleh aplikasi (AppError / AuthError)
   if (error instanceof AppError) {
+    logger.warn(`Operational application error: ${error.message}`, {
+      action: 'ServerAction',
+      status: error.status,
+      metadata: { code: error.code },
+    });
     return actionError(error.message, error.code, error.status);
   }
 
@@ -122,6 +129,12 @@ export function handleActionError(error: unknown): ActionResponse<never> {
       }
       fieldErrors[field].push(issue.message);
     }
+
+    logger.warn('Form validation failed', {
+      action: 'ServerAction',
+      status: 422,
+      metadata: { fields: Object.keys(fieldErrors) },
+    });
 
     return actionError(
       'Validasi data gagal. Silakan periksa kolom formulir.',
@@ -139,9 +152,9 @@ export function handleActionError(error: unknown): ActionResponse<never> {
     typeof (error as { code: unknown }).code === 'string'
   ) {
     const pgError = error as { code: string; message?: string };
-    console.error('[DatabaseError]', {
-      code: pgError.code,
-      message: pgError.message,
+    captureException(error, {
+      action: 'ServerAction',
+      metadata: { pgCode: pgError.code },
     });
 
     switch (pgError.code) {
@@ -191,7 +204,10 @@ export function handleActionError(error: unknown): ActionResponse<never> {
   }
 
   // 4. Unexpected / Unknown Server Error (Log detail di server, kembalikan pesan aman ke client)
-  console.error('[UnhandledServerActionError]', error);
+  captureException(error, {
+    action: 'ServerAction',
+    status: 500,
+  });
 
   return actionError(
     'Terjadi kesalahan internal pada server. Silakan coba beberapa saat lagi.',

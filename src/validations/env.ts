@@ -8,6 +8,7 @@ export const clientEnvSchema = z.object({
 
 export const serverEnvSchema = clientEnvSchema.extend({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(20, 'SUPABASE_SERVICE_ROLE_KEY is required and must remain server-only'),
+  CRON_SECRET: z.string().min(1, 'CRON_SECRET must not be empty').optional(),
 });
 
 export type ClientEnv = z.infer<typeof clientEnvSchema>;

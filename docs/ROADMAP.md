@@ -837,10 +837,10 @@ Test valid untuk Book; sitemap/robots benar; tidak ada pelanggaran axe kritis.
 **Referensi PRD:** §14.6, §15, §16.7, §18.
 
 **Deliverables**
-- [ ] Route `/api/keep-alive` (query baca ringan) + `vercel.json` cron tiap 5 hari.
-- [ ] Structured logging dengan request/correlation id & redaksi PII/secret.
-- [ ] Error tracking/monitoring (jika tersedia), pembedaan expected vs unexpected error.
-- [ ] Review keamanan menyeluruh (CSP final, CORS, SSRF, upload, dependency audit).
+- [x] Route `/api/keep-alive` (query baca ringan) + `vercel.json` cron tiap 5 hari.
+- [x] Structured logging dengan request/correlation id & redaksi PII/secret.
+- [x] Error tracking/monitoring (jika tersedia), pembedaan expected vs unexpected error.
+- [x] Review keamanan menyeluruh (CSP final, CORS, SSRF, upload, dependency audit).
 
 **Prompt**
 

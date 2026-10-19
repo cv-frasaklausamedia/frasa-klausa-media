@@ -15,6 +15,7 @@ import {
   type ActionResponse,
 } from '@/lib/action-response';
 import type { Database } from '@/types/database';
+import { logger } from '@/lib/logger';
 
 /**
  * Server Action: updateProfileNameAction
@@ -220,6 +221,13 @@ export async function uploadAvatarAction(
         // Abaikan kegagalan penghapusan file lama agar tidak membatalkan respons sukses
       }
     }
+
+    logger.info('Avatar uploaded and updated successfully', {
+      action: 'uploadAvatarAction',
+      actorId: user.id,
+      status: 200,
+      metadata: { ext, canonicalMime },
+    });
 
     return actionSuccess({ avatarUrl: publicUrl });
   } catch (error) {

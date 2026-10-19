@@ -235,7 +235,8 @@ export const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
           data-variant={variant}
           data-side={side}
           className={cn(
-            "group peer hidden md:flex flex-col fixed inset-y-0 left-0 z-30 h-screen border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-300 ease-in-out overflow-hidden md:w-[72px] xl:w-64 xl:sidebar-collapsed:w-[72px]",
+            "group peer hidden md:flex flex-col fixed inset-y-0 left-0 z-30 h-screen border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-300 ease-in-out overflow-hidden",
+            state === "collapsed" ? "w-[72px]" : "w-64",
             className
           )}
           {...props}
@@ -269,7 +270,7 @@ export const SidebarTrigger = React.forwardRef<
         size="icon"
         aria-label={openMobile ? "Tutup navigasi drawer" : "Buka navigasi drawer"}
         aria-expanded={openMobile}
-        className={cn("h-8 w-8 text-foreground md:hidden", className)}
+        className={cn("h-8 w-8 text-foreground md:hidden cursor-pointer", className)}
         onClick={(event) => {
           onClick?.(event)
           toggleSidebar()
@@ -280,14 +281,14 @@ export const SidebarTrigger = React.forwardRef<
         <span className="sr-only">Toggle Drawer</span>
       </Button>
 
-      {/* Desktop Collapse/Expand Trigger (>= 1280px) */}
+      {/* Desktop & Tablet Collapse/Expand Trigger (>= 768px) */}
       <Button
         data-sidebar="trigger-desktop"
         variant="ghost"
         size="icon"
         aria-label={state === "expanded" ? "Ciutkan navigasi sidebar" : "Bentangkan navigasi sidebar"}
         aria-expanded={state === "expanded"}
-        className={cn("h-8 w-8 text-foreground hidden xl:inline-flex", className)}
+        className={cn("h-8 w-8 text-foreground hidden md:inline-flex cursor-pointer", className)}
         onClick={(event) => {
           onClick?.(event)
           toggleSidebar()
@@ -331,11 +332,14 @@ export const SidebarInset = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div">
 >(({ className, ...props }, ref) => {
+  const { state } = useSidebar()
+
   return (
     <div
       ref={ref}
       className={cn(
-        "relative flex min-h-screen w-full flex-1 min-w-0 flex-col bg-background transition-[padding] duration-300 ease-in-out md:pl-[72px] xl:pl-64 xl:sidebar-collapsed:pl-[72px]",
+        "relative flex min-h-screen w-full flex-1 min-w-0 flex-col bg-background transition-[padding] duration-300 ease-in-out",
+        state === "collapsed" ? "md:pl-[72px]" : "md:pl-64",
         className
       )}
       {...props}

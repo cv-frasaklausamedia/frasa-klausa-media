@@ -10,6 +10,7 @@ import {
   actionError,
   type ActionResponse,
 } from '@/lib/action-response';
+import { logger } from '@/lib/logger';
 import {
   executeCreatePost,
   executeUpdatePost,
@@ -97,7 +98,14 @@ async function getRealPostServiceDeps(): Promise<PostServiceDeps> {
     revalidate: (paths) => {
       paths.forEach((p) => revalidatePath(p));
     },
-    logger: console,
+    logger: {
+      error: (msg: string, ...args: unknown[]) => {
+        logger.error(msg, args.length > 0 ? { extra: args } : undefined);
+      },
+      info: (msg: string, ...args: unknown[]) => {
+        logger.info(msg, args.length > 0 ? { extra: args } : undefined);
+      },
+    },
     supabaseUrl: env.NEXT_PUBLIC_SUPABASE_URL,
   };
 }

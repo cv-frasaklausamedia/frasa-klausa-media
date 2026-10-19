@@ -21,6 +21,7 @@ import {
 } from '@/lib/inquiries/service';
 import type { ContactInquiryInput, UpdateInquiryStatusInput } from '@/validations/inquiry';
 import type { InquiryStatus } from '@/types/database';
+import { logger } from '@/lib/logger';
 
 function getRealInquiryServiceDeps(): InquiryServiceDeps {
   return {
@@ -53,10 +54,22 @@ export async function submitContactInquiryAction(
   input: ContactInquiryInput
 ): Promise<ActionResponse<{ message: string }>> {
   try {
+    const startTime = Date.now();
     const clientIp = await getClientIp();
     const deps = getRealInquiryServiceDeps();
 
     const result = await executeSubmitContactInquiry(deps, input, { clientIp });
+
+    logger.info('Contact inquiry received and stored', {
+      action: 'submitContactInquiryAction',
+      status: 200,
+      durationMs: Date.now() - startTime,
+      metadata: {
+        clientIp,
+        emailDomain: input.email.split('@')[1],
+        subjectLength: input.subject?.length || 0,
+      },
+    });
 
     // Revalidasi inbox admin agar pesan baru langsung tampak
     revalidatePath('/admin/inbox');

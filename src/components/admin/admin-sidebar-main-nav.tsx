@@ -150,63 +150,68 @@ function CollapsibleNavGroup({ item, pathname, onNavigate }: CollapsibleNavGroup
 
   return (
     <SidebarMenuItem>
-      {/* 1. Mode Ciut / Icon Mode (Tablet & Desktop Collapsed 72px): Floating Dropdown Popover */}
-      <div className="hidden md:block xl:hidden xl:sidebar-collapsed:block w-full">
+      {/* 1. Mode Ciut / Icon Mode (Collapsed 72px): Floating Dropdown Popover */}
+      <div className="hidden group-data-[collapsible=icon]:block w-full">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               isActive={isAnyChildActive}
-              tooltip={item.title}
               className={cn(
                 'cursor-pointer justify-center transition-colors',
                 isAnyChildActive && 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground'
               )}
+              aria-label={item.title}
             >
-              <Icon className="h-4 w-4 shrink-0" />
+              <Icon className="h-5 w-5 shrink-0" />
               <span className="sr-only">{item.title}</span>
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             side="right"
             align="start"
-            sideOffset={12}
-            className="min-w-48 p-1.5 shadow-lg border border-border/80 bg-popover rounded-xl"
+            sideOffset={14}
+            className="min-w-52 p-1.5 shadow-xl border border-border/80 bg-popover text-popover-foreground rounded-xl z-50 animate-in fade-in-0 zoom-in-95 data-[side=right]:slide-in-from-left-2 duration-150"
           >
-            <DropdownMenuLabel className="px-2.5 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {item.title}
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator className="my-1 bg-border/60" />
-            {item.children.map((child) => {
-              const childActive = pathname.startsWith(child.href);
-              const ChildIcon = child.icon;
-              return (
-                <DropdownMenuItem key={child.href} asChild>
-                  <Link
-                    href={child.href}
-                    onClick={onNavigate}
-                    className={cn(
-                      'flex items-center gap-2.5 cursor-pointer text-xs py-2 px-2.5 rounded-lg transition-colors',
-                      childActive
-                        ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground'
-                        : 'text-popover-foreground hover:bg-accent hover:text-accent-foreground'
-                    )}
-                  >
-                    {ChildIcon ? (
-                      <ChildIcon className="h-3.5 w-3.5 shrink-0 opacity-80" />
-                    ) : (
-                      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
-                    )}
-                    <span>{child.title}</span>
-                  </Link>
-                </DropdownMenuItem>
-              );
-            })}
+            <div className="px-3 py-2 border-b border-border/50 mb-1">
+              <p className="text-xs font-semibold text-foreground">{item.title}</p>
+              <p className="text-[11px] text-muted-foreground">Pilih submenu navigasi</p>
+            </div>
+            <div className="space-y-0.5">
+              {item.children.map((child) => {
+                const childActive = pathname.startsWith(child.href);
+                const ChildIcon = child.icon;
+                return (
+                  <DropdownMenuItem key={child.href} asChild>
+                    <Link
+                      href={child.href}
+                      onClick={onNavigate}
+                      className={cn(
+                        'flex items-center gap-2.5 cursor-pointer text-xs py-2 px-2.5 rounded-lg transition-colors font-medium',
+                        childActive
+                          ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground shadow-2xs'
+                          : 'text-popover-foreground hover:bg-accent hover:text-accent-foreground'
+                      )}
+                    >
+                      {ChildIcon && (
+                        <ChildIcon
+                          className={cn(
+                            'h-4 w-4 shrink-0',
+                            childActive ? 'text-sidebar-accent-foreground' : 'text-muted-foreground'
+                          )}
+                        />
+                      )}
+                      <span>{child.title}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                );
+              })}
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
-      {/* 2. Mode Lebar / Expanded (Desktop XL & Mobile Drawer): Accordion Collapsible */}
-      <div className="max-md:block hidden xl:block xl:sidebar-collapsed:hidden w-full">
+      {/* 2. Mode Lebar / Expanded (Desktop & Mobile Drawer): Accordion Collapsible */}
+      <div className="block group-data-[collapsible=icon]:hidden w-full">
         <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
           <CollapsibleTrigger asChild>
             <SidebarMenuButton
@@ -284,7 +289,7 @@ export function AdminSidebarMainNav() {
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel className="max-md:block hidden xl:block xl:sidebar-collapsed:hidden">
+      <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">
         Menu Utama
       </SidebarGroupLabel>
       <SidebarGroupContent>
@@ -314,7 +319,7 @@ export function AdminSidebarMainNav() {
                 >
                   <Link href={item.href} onClick={handleLinkClick}>
                     <Icon className="h-4 w-4 shrink-0" />
-                    <span className="max-md:inline hidden xl:inline xl:sidebar-collapsed:hidden">
+                    <span className="group-data-[collapsible=icon]:hidden">
                       {item.title}
                     </span>
                   </Link>

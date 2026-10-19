@@ -41,7 +41,7 @@ export function SuperAdminNavClient() {
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel className="max-md:block hidden xl:block xl:sidebar-collapsed:hidden">
+      <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">
         Super Admin
       </SidebarGroupLabel>
       <SidebarGroupContent>
@@ -59,7 +59,7 @@ export function SuperAdminNavClient() {
                 >
                   <Link href={item.href} onClick={handleLinkClick}>
                     <Icon className="h-4 w-4 shrink-0" />
-                    <span className="max-md:inline hidden xl:inline xl:sidebar-collapsed:hidden">
+                    <span className="group-data-[collapsible=icon]:hidden">
                       {item.title}
                     </span>
                   </Link>

@@ -8,14 +8,14 @@ export async function AdminRoleBadge() {
   return (
     <>
       {/* Full Badge: visible on mobile drawer and expanded desktop */}
-      <div className="items-center gap-2 overflow-hidden max-md:flex hidden xl:flex xl:sidebar-collapsed:hidden">
+      <div className="items-center gap-2 overflow-hidden flex group-data-[collapsible=icon]:hidden">
         <Badge variant="outline" className="text-[10px] uppercase font-mono tracking-wider">
           {isSuperAdmin ? 'Super Admin' : 'Admin'}
         </Badge>
       </div>
 
-      {/* Mini Badge: visible on tablet dock (72px) and collapsed desktop (72px) */}
-      <div className="items-center justify-center hidden md:flex xl:hidden xl:sidebar-collapsed:flex">
+      {/* Mini Badge: visible on collapsed sidebar (72px) */}
+      <div className="items-center justify-center hidden group-data-[collapsible=icon]:flex">
         <Badge variant="outline" className="text-[9px] uppercase font-mono px-1.5 py-0.5">
           {isSuperAdmin ? 'SA' : 'A'}
         </Badge>

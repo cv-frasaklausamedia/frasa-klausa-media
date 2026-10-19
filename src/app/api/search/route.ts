@@ -8,6 +8,8 @@ import {
   type GroupedSearchResults,
 } from '@/validations/search';
 import type { Database } from '@/types/database';
+import { logger } from '@/lib/logger';
+import { captureException } from '@/lib/monitoring';
 
 // Rate Limiter: Maksimal 30 request per menit per alamat IP
 const searchRateLimiter = createRateLimiter({
@@ -32,11 +34,17 @@ function getClientIpFromRequest(request: NextRequest): string {
 
 export async function GET(request: NextRequest) {
   try {
+    const startTime = Date.now();
     // 1. Ekstraksi IP & Proteksi Rate Limiting
     const clientIp = getClientIpFromRequest(request);
     const rateLimit = await searchRateLimiter.limit(`search:${clientIp}`);
 
     if (!rateLimit.success) {
+      logger.warn('Search rate limit exceeded', {
+        route: '/api/search',
+        status: 429,
+        metadata: { clientIp },
+      });
       const retryAfter = Math.max(1, rateLimit.reset - Math.floor(Date.now() / 1000));
       return NextResponse.json(
         { error: 'Terlalu banyak permintaan pencarian. Silakan coba sesaat lagi.' },
@@ -143,6 +151,17 @@ export async function GET(request: NextRequest) {
       total: books.length + posts.length,
     };
 
+    logger.info('Search query processed', {
+      route: '/api/search',
+      status: 200,
+      durationMs: Date.now() - startTime,
+      metadata: {
+        queryLength: q.length,
+        bookResultsCount: books.length,
+        postResultsCount: posts.length,
+      },
+    });
+
     return NextResponse.json(result, {
       status: 200,
       headers: {
@@ -163,7 +182,10 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
-    console.error('[API /api/search] Unexpected error:', error);
+    captureException(error, {
+      route: '/api/search',
+      status: 500,
+    });
     return NextResponse.json(
       { error: 'Terjadi kesalahan server saat memproses pencarian' },
       { status: 500 }

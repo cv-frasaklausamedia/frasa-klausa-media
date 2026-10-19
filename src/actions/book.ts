@@ -10,6 +10,7 @@ import {
   actionError,
   type ActionResponse,
 } from '@/lib/action-response';
+import { logger } from '@/lib/logger';
 import {
   executeCreateBook,
   executeUpdateBook,
@@ -95,7 +96,14 @@ async function getRealServiceDeps(): Promise<BookServiceDeps> {
       revalidatePath('/');
       revalidatePath('/katalog');
     },
-    logger: console,
+    logger: {
+      error: (msg: string, ...args: unknown[]) => {
+        logger.error(msg, args.length > 0 ? { extra: args } : undefined);
+      },
+      info: (msg: string, ...args: unknown[]) => {
+        logger.info(msg, args.length > 0 ? { extra: args } : undefined);
+      },
+    },
     supabaseUrl: env.NEXT_PUBLIC_SUPABASE_URL,
   };
 }

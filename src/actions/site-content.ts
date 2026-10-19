@@ -9,6 +9,7 @@ import {
   actionError,
   type ActionResponse,
 } from '@/lib/action-response';
+import { logger } from '@/lib/logger';
 import {
   executeSaveHeroContent,
   executeSaveAboutContent,
@@ -97,7 +98,14 @@ async function getRealSiteContentServiceDeps(): Promise<SiteContentServiceDeps> 
         tags.forEach((t) => revalidateTag(t, { expire: 0 }));
       },
     },
-    logger: console,
+    logger: {
+      error: (msg: string, ...args: unknown[]) => {
+        logger.error(msg, args.length > 0 ? { extra: args } : undefined);
+      },
+      info: (msg: string, ...args: unknown[]) => {
+        logger.info(msg, args.length > 0 ? { extra: args } : undefined);
+      },
+    },
   };
 }
 
