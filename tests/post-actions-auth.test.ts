@@ -6,7 +6,6 @@ import {
   executeUpdatePost,
   executeDeletePost,
   executeTogglePostStatus,
-  executeUploadBlogImage,
 } from '../src/lib/posts/service.ts';
 import type { PostServiceDeps, PostDetail } from '../src/lib/posts/types.ts';
 import { AppError } from '../src/lib/action-response.ts';

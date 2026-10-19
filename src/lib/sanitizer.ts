@@ -158,3 +158,17 @@ export function sanitizePostHtml(dirtyHtml: string | null | undefined): string {
   const clean = sanitizeHtml(dirtyHtml, POST_SANITIZE_CONFIG);
   return clean.trim();
 }
+
+/**
+ * Sanitasi konten narasi teks kaya halaman publik (seperti Sejarah di Tentang Kami).
+ * Mencegah script/iframe/on* handler berbahaya sambil menjaga format tipografi dasar.
+ */
+export function sanitizeSiteNarrativeHtml(dirtyHtml: string | null | undefined): string {
+  if (!dirtyHtml || typeof dirtyHtml !== 'string') {
+    return '';
+  }
+
+  const clean = sanitizeHtml(dirtyHtml, SANITIZE_CONFIG);
+  return clean.trim();
+}
+

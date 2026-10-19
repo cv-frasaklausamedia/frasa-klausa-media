@@ -65,7 +65,7 @@ export function PostDeleteDialog({
             <p>
               Apakah Anda yakin ingin menghapus artikel{' '}
               <strong className="text-foreground font-semibold">
-                "{post.title}"
+                &ldquo;{post.title}&rdquo;
               </strong>
               ?
             </p>

@@ -178,8 +178,8 @@ test('Post Storage Rollback & Orphan Cleanup Suite (Tahap 6 — PRD §14.5 & §1
           isActive: true,
         }),
       },
-      db: {} as any,
-      storage: {} as any,
+      db: {} as unknown as PostServiceDeps['db'],
+      storage: {} as unknown as PostServiceDeps['storage'],
       revalidate: () => {},
     };
 

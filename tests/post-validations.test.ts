@@ -7,7 +7,6 @@ import {
   calculateReadingTimeMinutes,
   formatReadingTime,
   validateBlogCleanupPaths,
-  extractBlogStoragePath,
   extractInlineImageUrls,
 } from '../src/validations/post.ts';
 
@@ -181,7 +180,7 @@ test('Post Validations Suite (Tahap 6 — CMS Blog PRD §6.2.F & §15.4)', async
     assert.equal(validateBlogCleanupPaths([`covers/${validUuid1}.php`]), null);
 
     // Menolak melebihi 20 path dalam satu panggilan
-    const twentyOnePaths = Array.from({ length: 21 }, (_, i) => `covers/${validUuid1}.jpg`);
+    const twentyOnePaths = Array.from({ length: 21 }, () => `covers/${validUuid1}.jpg`);
     assert.equal(validateBlogCleanupPaths(twentyOnePaths), null);
   });
 

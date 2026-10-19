@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import type { PostDetail, PostListItem } from '../src/lib/posts/types.ts';
+
 
 /**
  * Simulasi evaluasi predicate RLS posts_select_policy:
