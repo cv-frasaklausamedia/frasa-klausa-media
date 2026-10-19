@@ -1,10 +1,12 @@
 import * as React from 'react';
+import { Suspense } from 'react';
 import { getActiveBanner } from '@/lib/banners/data-access';
 import { getSiteContent } from '@/lib/site-content/data-access';
 import { StickyBanner } from '@/components/public/sticky-banner';
 import { Navbar } from '@/components/public/navbar';
 import { Footer } from '@/components/public/footer';
 import { GlobalSearchDialog } from '@/components/public/global-search-dialog';
+import { NavbarSkeleton, StickyBannerSkeleton } from '@/components/public/public-layout-skeleton';
 
 export default async function PublicLayout({
   children,
@@ -30,10 +32,14 @@ export default async function PublicLayout({
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       {/* Banner Promosi Berjadwal (render null bila tidak ada jadwal aktif) */}
-      <StickyBanner banner={banner} />
+      <Suspense fallback={<StickyBannerSkeleton />}>
+        <StickyBanner banner={banner} />
+      </Suspense>
 
       {/* Navbar Navigasi Utama Persisten */}
-      <Navbar />
+      <Suspense fallback={<NavbarSkeleton />}>
+        <Navbar />
+      </Suspense>
 
       {/* Konten Halaman Spesifik (Hanya segmen ini yang re-render saat navigasi) */}
       <main className="flex-1">{children}</main>

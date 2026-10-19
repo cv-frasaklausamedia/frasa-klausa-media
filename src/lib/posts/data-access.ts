@@ -1,6 +1,7 @@
 import 'server-only';
+import { connection } from 'next/server';
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createPublicClient } from '@/lib/supabase/server';
 import type { PostQueryParams, PostFormValues, PostStatus } from '@/validations/post';
 import type {
   PostListItem,
@@ -521,3 +522,28 @@ export async function isBlogStoragePathInUse(
 
   return false;
 }
+
+/**
+ * Mengambil daftar artikel blog terbaru yang telah terpublikasi untuk Beranda publik
+ */
+export async function getPublicLatestPosts(limit = 3): Promise<PostListItem[]> {
+  await connection();
+  const supabase = createPublicClient();
+  const nowIso = new Date().toISOString();
+
+  const { data, error } = await supabase
+    .from('posts')
+    .select(POST_LIST_SELECT_COLUMNS)
+    .eq('status', 'published')
+    .lte('published_at', nowIso)
+    .order('published_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('[getPublicLatestPosts] Error:', error);
+    return [];
+  }
+
+  return ((data as unknown as RawPostListRow[]) || []).map(mapRawPostToListItem);
+}
+

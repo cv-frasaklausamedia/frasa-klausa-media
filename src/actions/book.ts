@@ -92,10 +92,8 @@ async function getRealServiceDeps(): Promise<BookServiceDeps> {
     },
     revalidate: (paths) => {
       paths.forEach((p) => revalidatePath(p));
-      // TODO: revalidatePath('/katalog') setelah katalog publik dibangun
-      // TODO: revalidatePath('/buku/' + slug) setelah detail buku publik dibangun
-      // TODO: revalidatePath('/sitemap.xml') setelah sitemap dinamis dibangun
-      // TODO: Jika halaman publik nanti memakai 'use cache' + cacheTag, ganti ke updateTag/revalidateTag
+      revalidatePath('/');
+      revalidatePath('/katalog');
     },
     logger: console,
     supabaseUrl: env.NEXT_PUBLIC_SUPABASE_URL,

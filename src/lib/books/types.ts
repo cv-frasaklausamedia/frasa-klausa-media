@@ -1,6 +1,10 @@
-import type { BookGalleryItem, BookQueryParams } from '../../validations/book.ts';
+import type {
+  BookGalleryItem,
+  BookQueryParams,
+  PublicCatalogQueryParams,
+} from '../../validations/book.ts';
 
-export type { BookGalleryItem, BookQueryParams };
+export type { BookGalleryItem, BookQueryParams, PublicCatalogQueryParams };
 
 /**
  * DTO untuk daftar buku di tabel Admin (kolom eksplisit dan hemat bandwidth)

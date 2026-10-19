@@ -1,7 +1,7 @@
 import 'server-only';
 import { connection } from 'next/server';
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createPublicClient } from '@/lib/supabase/server';
 import type {
   BookCategoryItem,
   CategoryListResponse,
@@ -157,7 +157,7 @@ export async function getCategoryById(id: string): Promise<BookCategoryItem | nu
  * Mengambil data kategori berdasarkan slug unik
  */
 export async function getCategoryBySlug(slug: string): Promise<BookCategoryItem | null> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const { data, error } = await supabase
     .from('book_categories')
@@ -306,3 +306,27 @@ export async function deleteCategory(id: string): Promise<void> {
     throw error;
   }
 }
+
+/**
+ * Mengambil daftar kategori buku populer beserta jumlah buku terpublikasi untuk Beranda publik
+ */
+export async function getPopularBookCategories(limit = 6): Promise<BookCategoryItem[]> {
+  const supabase = createPublicClient();
+
+  const { data, error } = await supabase
+    .from('book_categories')
+    .select('id, name, slug, description, seo_title, seo_description, created_at, updated_at, books(count)')
+    .order('name', { ascending: true });
+
+  if (error) {
+    console.error('[getPopularBookCategories] Error:', error);
+    return [];
+  }
+
+  const items = (data || []).map(mapCategoryRow);
+  // Urutkan berdasarkan kategori dengan jumlah buku terbanyak
+  items.sort((a, b) => b.book_count - a.book_count);
+
+  return items.slice(0, limit);
+}
+

@@ -1,6 +1,6 @@
 import 'server-only';
 import { connection } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createPublicClient } from '@/lib/supabase/server';
 import { env } from '@/configs/env';
 import type { Database } from '@/types/database';
 import type {
@@ -12,7 +12,11 @@ import type {
   BookMutationResult,
 } from './types';
 import { parseRpcMutationResult } from './service';
-import type { BookQueryParams, BookFormValues } from '@/validations/book';
+import type {
+  BookQueryParams,
+  BookFormValues,
+  PublicCatalogQueryParams,
+} from '@/validations/book';
 
 /**
  * Sanitasi string pencarian agar tidak merusak filter ILIKE atau PostgREST syntax
@@ -459,7 +463,7 @@ export async function getRelatedBooks(
   categoryId: string,
   limit = 5
 ): Promise<BookRelatedOption[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   // 1. Ambil relasi manual dari book_related yang berstatus is_published = true
   const { data: manualRelations } = await supabase
@@ -520,3 +524,209 @@ export async function getRelatedBooks(
 
   return results;
 }
+
+/**
+ * Mengambil daftar buku terpublikasi untuk katalog publik dengan filter, pencarian, dan sorting
+ */
+export async function getPublicBooks(
+  params: PublicCatalogQueryParams
+): Promise<BookListResponse> {
+  const supabase = createPublicClient();
+
+  const { page, pageSize, q, kategori, minPrice, maxPrice, sort } = params;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let query = supabase
+    .from('books')
+    .select(
+      'id, title, slug, cover_url, author, price_regular, price_promo, is_featured, is_published, publish_year, isbn, created_at, updated_at, category_id, book_categories!inner(id, name, slug)',
+      { count: 'exact' }
+    )
+    .eq('is_published', true);
+
+  // 1. Filter Pencarian Teks
+  const cleanQ = sanitizeSearchQuery(q);
+  if (cleanQ) {
+    query = query.or(
+      `title.ilike.%${cleanQ}%,author.ilike.%${cleanQ}%,isbn.ilike.%${cleanQ}%`
+    );
+  }
+
+  // 2. Filter Kategori (bisa slug atau UUID)
+  if (kategori && kategori !== 'all') {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(kategori);
+    if (isUuid) {
+      query = query.eq('category_id', kategori);
+    } else {
+      query = query.eq('book_categories.slug', kategori);
+    }
+  }
+
+  // 3. Filter Rentang Harga (harga efektif: jika price_promo ada maka gunakan price_promo, else price_regular)
+  if (minPrice !== undefined && minPrice > 0) {
+    query = query.gte('price_regular', minPrice);
+  }
+  if (maxPrice !== undefined && maxPrice > 0) {
+    query = query.lte('price_regular', maxPrice);
+  }
+
+  // 4. Sorting Allowlist
+  switch (sort) {
+    case 'created_at_asc':
+      query = query.order('created_at', { ascending: true });
+      break;
+    case 'title_asc':
+      query = query.order('title', { ascending: true });
+      break;
+    case 'title_desc':
+      query = query.order('title', { ascending: false });
+      break;
+    case 'price_asc':
+      query = query.order('price_regular', { ascending: true });
+      break;
+    case 'price_desc':
+      query = query.order('price_regular', { ascending: false });
+      break;
+    case 'year_asc':
+      query = query.order('publish_year', { ascending: true });
+      break;
+    case 'year_desc':
+      query = query.order('publish_year', { ascending: false });
+      break;
+    case 'created_at_desc':
+    default:
+      query = query.order('created_at', { ascending: false });
+      break;
+  }
+
+  // 5. Paginasi
+  query = query.range(from, to);
+
+  const { data, count, error } = await query;
+
+  if (error) {
+    console.error('[getPublicBooks] Supabase query error:', error);
+    throw error;
+  }
+
+  const totalCount = count ?? 0;
+  const pageCount = Math.ceil(totalCount / pageSize) || 1;
+  const items = ((data as unknown as RawBookDbRow[]) || []).map(mapBookRow);
+
+  return {
+    items,
+    totalCount,
+    page,
+    pageSize,
+    pageCount,
+  };
+}
+
+/**
+ * Mengambil detail lengkap buku publik berdasarkan slug.
+ * Menegakkan proteksi ketat: hanya buku dengan is_published = true yang dapat diakses anonim.
+ */
+export async function getPublicBookBySlug(slug: string): Promise<BookDetail | null> {
+  const supabase = createPublicClient();
+
+  const { data: bookRow, error: bookError } = await supabase
+    .from('books')
+    .select(
+      'id, title, slug, description, cover_url, category_id, author, editor, publisher, publish_year, isbn, page_count, price_regular, price_promo, is_featured, is_published, shopee_url, tokopedia_url, whatsapp_number, whatsapp_message_template, seo_title, seo_description, created_at, updated_at, book_categories(id, name, slug)'
+    )
+    .eq('slug', slug)
+    .eq('is_published', true)
+    .maybeSingle();
+
+  if (bookError || !bookRow) {
+    return null;
+  }
+
+  const bookId = (bookRow as { id: string }).id;
+
+  // Ambil galeri gambar terurut
+  const { data: galleryRows } = await supabase
+    .from('book_images')
+    .select('id, image_url, alt_text, sort_order')
+    .eq('book_id', bookId)
+    .order('sort_order', { ascending: true });
+
+  // Ambil relasi buku terkait manual
+  const { data: relatedRows } = await supabase
+    .from('book_related')
+    .select('related_id')
+    .eq('book_id', bookId);
+
+  const baseItem = mapBookRow(bookRow as unknown as RawBookDbRow);
+
+  return {
+    ...baseItem,
+    description: (bookRow as { description?: string }).description ?? '',
+    editor: (bookRow as { editor?: string | null }).editor ?? null,
+    publisher: (bookRow as { publisher?: string }).publisher ?? 'Frasa Klausa Media',
+    page_count: Number((bookRow as { page_count?: number }).page_count) || 1,
+    shopee_url: (bookRow as { shopee_url?: string | null }).shopee_url ?? null,
+    tokopedia_url: (bookRow as { tokopedia_url?: string | null }).tokopedia_url ?? null,
+    whatsapp_number: (bookRow as { whatsapp_number?: string }).whatsapp_number ?? '6281380604256',
+    whatsapp_message_template: (bookRow as { whatsapp_message_template?: string | null }).whatsapp_message_template ?? null,
+    seo_title: (bookRow as { seo_title?: string | null }).seo_title ?? null,
+    seo_description: (bookRow as { seo_description?: string | null }).seo_description ?? null,
+    gallery: (galleryRows || []).map((img) => ({
+      id: img.id,
+      image_url: img.image_url,
+      alt_text: (img as { alt_text?: string }).alt_text ?? '',
+      sort_order: Number(img.sort_order) || 0,
+    })),
+    related_book_ids: (relatedRows || []).map((r) => r.related_id),
+  };
+}
+
+/**
+ * Mengambil daftar buku unggulan untuk Beranda (is_featured = true & is_published = true)
+ */
+export async function getFeaturedBooks(limit = 6): Promise<BookListItem[]> {
+  const supabase = createPublicClient();
+
+  const { data, error } = await supabase
+    .from('books')
+    .select(
+      'id, title, slug, cover_url, author, price_regular, price_promo, is_featured, is_published, publish_year, isbn, created_at, updated_at, category_id, book_categories(id, name)'
+    )
+    .eq('is_published', true)
+    .eq('is_featured', true)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('[getFeaturedBooks] Error:', error);
+    return [];
+  }
+
+  return ((data as unknown as RawBookDbRow[]) || []).map(mapBookRow);
+}
+
+/**
+ * Mengambil daftar buku rilis terbaru untuk Beranda (is_published = true ORDER BY created_at DESC)
+ */
+export async function getLatestBooks(limit = 6): Promise<BookListItem[]> {
+  const supabase = createPublicClient();
+
+  const { data, error } = await supabase
+    .from('books')
+    .select(
+      'id, title, slug, cover_url, author, price_regular, price_promo, is_featured, is_published, publish_year, isbn, created_at, updated_at, category_id, book_categories(id, name)'
+    )
+    .eq('is_published', true)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('[getLatestBooks] Error:', error);
+    return [];
+  }
+
+  return ((data as unknown as RawBookDbRow[]) || []).map(mapBookRow);
+}
+
+

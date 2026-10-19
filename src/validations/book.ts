@@ -632,3 +632,124 @@ export const bookQuerySchema = z.preprocess((input) => {
 }, rawBookQuerySchema);
 
 export type BookQueryParams = z.infer<typeof bookQuerySchema>;
+
+// ============================================================================
+// 6. SKEMA URL QUERY PARAMETER KATALOG PUBLIK (PRD §6.3.3 & §10.2)
+// ============================================================================
+
+export const PUBLIC_CATALOG_PAGE_SIZES = [12, 24, 36] as const;
+export type PublicCatalogPageSize = (typeof PUBLIC_CATALOG_PAGE_SIZES)[number];
+
+export const PUBLIC_CATALOG_SORT_OPTIONS = [
+  'created_at_desc',
+  'created_at_asc',
+  'title_asc',
+  'title_desc',
+  'price_asc',
+  'price_desc',
+  'year_desc',
+  'year_asc',
+] as const;
+export type PublicCatalogSortOption = (typeof PUBLIC_CATALOG_SORT_OPTIONS)[number];
+
+const rawPublicCatalogQuerySchema = z.object({
+  page: z
+    .preprocess((val) => {
+      if (typeof val === 'string') {
+        const parsed = parseInt(val, 10);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+      }
+      if (typeof val === 'number' && Number.isFinite(val) && val > 0) {
+        return Math.floor(val);
+      }
+      return 1;
+    }, z.number().int().positive())
+    .catch(1)
+    .default(1),
+
+  pageSize: z
+    .preprocess((val) => {
+      if (typeof val === 'string') {
+        const parsed = parseInt(val, 10);
+        return PUBLIC_CATALOG_PAGE_SIZES.includes(parsed as PublicCatalogPageSize) ? parsed : 12;
+      }
+      if (typeof val === 'number') {
+        return PUBLIC_CATALOG_PAGE_SIZES.includes(val as PublicCatalogPageSize) ? val : 12;
+      }
+      return 12;
+    }, z.number())
+    .catch(12)
+    .default(12),
+
+  q: z
+    .preprocess((val) => {
+      if (typeof val === 'string') return val.slice(0, 100).trim();
+      return '';
+    }, z.string())
+    .catch('')
+    .default(''),
+
+  kategori: z
+    .preprocess((val) => {
+      if (typeof val === 'string' && val.trim().length > 0) return val.trim();
+      return undefined;
+    }, z.string().optional())
+    .catch(undefined),
+
+  minPrice: z
+    .preprocess((val) => {
+      if (typeof val === 'string' && val.trim() !== '') {
+        const parsed = parseInt(val.replace(/\D/g, ''), 10);
+        return Number.isFinite(parsed) && parsed >= 0 ? Math.min(parsed, 100_000_000) : undefined;
+      }
+      if (typeof val === 'number' && Number.isFinite(val) && val >= 0) {
+        return Math.min(Math.floor(val), 100_000_000);
+      }
+      return undefined;
+    }, z.number().min(0).max(100_000_000).optional())
+    .catch(undefined),
+
+  maxPrice: z
+    .preprocess((val) => {
+      if (typeof val === 'string' && val.trim() !== '') {
+        const parsed = parseInt(val.replace(/\D/g, ''), 10);
+        return Number.isFinite(parsed) && parsed >= 0 ? Math.min(parsed, 100_000_000) : undefined;
+      }
+      if (typeof val === 'number' && Number.isFinite(val) && val >= 0) {
+        return Math.min(Math.floor(val), 100_000_000);
+      }
+      return undefined;
+    }, z.number().min(0).max(100_000_000).optional())
+    .catch(undefined),
+
+  sort: z
+    .preprocess((val) => {
+      if (typeof val === 'string' && PUBLIC_CATALOG_SORT_OPTIONS.includes(val as PublicCatalogSortOption)) {
+        return val as PublicCatalogSortOption;
+      }
+      return 'created_at_desc';
+    }, z.enum(PUBLIC_CATALOG_SORT_OPTIONS))
+    .catch('created_at_desc')
+    .default('created_at_desc'),
+});
+
+export const publicCatalogQuerySchema = z.preprocess((input) => {
+  if (input && typeof input === 'object') {
+    const raw = input as Record<string, unknown>;
+    const effectiveCategory =
+      typeof raw.kategori === 'string' && raw.kategori.trim() !== ''
+        ? raw.kategori.trim()
+        : typeof raw.category === 'string' && raw.category.trim() !== ''
+        ? raw.category.trim()
+        : undefined;
+
+    return {
+      ...raw,
+      kategori: effectiveCategory,
+    };
+  }
+  return input;
+}, rawPublicCatalogQuerySchema);
+
+export type PublicCatalogQueryParams = z.infer<typeof publicCatalogQuerySchema>;
+
