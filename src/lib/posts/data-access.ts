@@ -2,7 +2,12 @@ import 'server-only';
 import { connection } from 'next/server';
 
 import { createClient, createPublicClient } from '@/lib/supabase/server';
-import type { PostQueryParams, PostFormValues, PostStatus } from '@/validations/post';
+import type {
+  PostQueryParams,
+  PublicBlogQueryParams,
+  PostFormValues,
+  PostStatus,
+} from '@/validations/post';
 import type {
   PostListItem,
   PostListResponse,
@@ -541,6 +546,132 @@ export async function getPublicLatestPosts(limit = 3): Promise<PostListItem[]> {
 
   if (error) {
     console.error('[getPublicLatestPosts] Error:', error);
+    return [];
+  }
+
+  return ((data as unknown as RawPostListRow[]) || []).map(mapRawPostToListItem);
+}
+
+/**
+ * Mengambil daftar artikel blog publik dengan filter kategori, pencarian, dan paginasi server-side.
+ * Hanya artikel dengan status='published' dan published_at <= now() yang dikembalikan (PRD §6.3.5 & US-06).
+ */
+export async function getPublicPosts(
+  queryParams: PublicBlogQueryParams
+): Promise<PostListResponse> {
+  await connection();
+  const supabase = createPublicClient();
+  const nowIso = new Date().toISOString();
+
+  const { page, pageSize, q, kategori, sort } = queryParams;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let query = supabase
+    .from('posts')
+    .select(POST_LIST_SELECT_COLUMNS, { count: 'exact' })
+    .eq('status', 'published')
+    .lte('published_at', nowIso);
+
+  // Filter Kategori (mencocokkan slug atau ID)
+  if (kategori) {
+    const { data: catData } = await supabase
+      .from('blog_categories')
+      .select('id')
+      .or(`slug.eq.${kategori},id.eq.${kategori}`)
+      .maybeSingle();
+
+    if (catData?.id) {
+      query = query.eq('category_id', catData.id);
+    } else {
+      return {
+        items: [],
+        totalCount: 0,
+        page,
+        pageSize,
+        pageCount: 0,
+      };
+    }
+  }
+
+  // Filter Pencarian Teks
+  if (q && q.trim()) {
+    const cleanQ = sanitizeSearchQuery(q);
+    if (cleanQ) {
+      query = query.or(`title.ilike.%${cleanQ}%,excerpt.ilike.%${cleanQ}%`);
+    }
+  }
+
+  // Pengurutan
+  switch (sort) {
+    case 'published_at_asc':
+      query = query.order('published_at', { ascending: true });
+      break;
+    case 'title_asc':
+      query = query.order('title', { ascending: true });
+      break;
+    case 'title_desc':
+      query = query.order('title', { ascending: false });
+      break;
+    case 'published_at_desc':
+    default:
+      query = query.order('published_at', { ascending: false });
+      break;
+  }
+
+  // Paginasi range
+  query = query.range(from, to);
+
+  const { data, count, error } = await query;
+
+  if (error) {
+    console.error('[getPublicPosts] Error:', error);
+    return {
+      items: [],
+      totalCount: 0,
+      page,
+      pageSize,
+      pageCount: 0,
+    };
+  }
+
+  const totalCount = count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
+  const items = ((data as unknown as RawPostListRow[]) || []).map(mapRawPostToListItem);
+
+  return {
+    items,
+    totalCount,
+    page,
+    pageSize,
+    pageCount,
+  };
+}
+
+/**
+ * Mengambil artikel terkait (kategori yang sama) untuk halaman detail artikel publik.
+ */
+export async function getPublicRelatedPosts(
+  postId: string,
+  categoryId: string,
+  limit = 3
+): Promise<PostListItem[]> {
+  await connection();
+  const supabase = createPublicClient();
+  const nowIso = new Date().toISOString();
+
+  const { data, error } = await supabase
+    .from('posts')
+    .select(POST_LIST_SELECT_COLUMNS)
+    .eq('status', 'published')
+    .lte('published_at', nowIso)
+    .eq('category_id', categoryId)
+    .neq('id', postId)
+    .order('published_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('[getPublicRelatedPosts] Error:', error);
     return [];
   }
 

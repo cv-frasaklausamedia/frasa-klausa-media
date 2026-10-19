@@ -366,3 +366,64 @@ export const postQuerySchema = z.object({
 });
 
 export type PostQueryParams = z.infer<typeof postQuerySchema>;
+
+// ============================================================================
+// 7. SKEMA QUERY STRING BLOG PUBLIK (PRD §6.3.5 & US-06)
+// ============================================================================
+
+export const PUBLIC_BLOG_PAGE_SIZE_OPTIONS = [6, 9, 12, 24] as const;
+export const DEFAULT_PUBLIC_BLOG_PAGE_SIZE = 9;
+
+export const publicBlogQuerySchema = z
+  .object({
+    page: z.preprocess((val) => {
+      const num = Number(val);
+      return isNaN(num) || num < 1 ? 1 : Math.floor(num);
+    }, z.number().int().positive().catch(1)),
+
+    pageSize: z.preprocess((val) => {
+      const num = Number(val);
+      return PUBLIC_BLOG_PAGE_SIZE_OPTIONS.includes(
+        num as (typeof PUBLIC_BLOG_PAGE_SIZE_OPTIONS)[number]
+      )
+        ? num
+        : DEFAULT_PUBLIC_BLOG_PAGE_SIZE;
+    }, z.number().int().catch(DEFAULT_PUBLIC_BLOG_PAGE_SIZE)),
+
+    q: z.preprocess((val) => {
+      if (typeof val === 'string') return val.trim().slice(0, 100);
+      return '';
+    }, z.string().catch('')),
+
+    kategori: z.preprocess((val) => {
+      if (typeof val === 'string' && val.trim() !== '') return val.trim();
+      return undefined;
+    }, z.string().optional()),
+
+    category: z.preprocess((val) => {
+      if (typeof val === 'string' && val.trim() !== '') return val.trim();
+      return undefined;
+    }, z.string().optional()),
+
+    sort: z.preprocess((val) => {
+      const allowedSorts = [
+        'published_at_desc',
+        'published_at_asc',
+        'title_asc',
+        'title_desc',
+      ];
+      if (typeof val === 'string' && allowedSorts.includes(val)) return val;
+      return 'published_at_desc';
+    }, z.enum([
+      'published_at_desc',
+      'published_at_asc',
+      'title_asc',
+      'title_desc',
+    ]).catch('published_at_desc')),
+  })
+  .transform((data) => ({
+    ...data,
+    kategori: data.kategori || data.category || undefined,
+  }));
+
+export type PublicBlogQueryParams = z.output<typeof publicBlogQuerySchema>;

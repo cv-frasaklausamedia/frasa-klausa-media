@@ -53,12 +53,12 @@ export function Footer({ contact, social }: FooterProps) {
           {/* Kolom 1: Identitas & Visi Penerbit */}
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-2.5">
-              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-background">
+              <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-border/70 bg-white p-0.5 shadow-xs ring-1 ring-black/5 dark:border-white/15 dark:ring-white/10 dark:bg-white">
                 <Image
-                  src="/logo/logo.png"
+                  src="/logo/logo.jpg"
                   alt={companyName}
                   fill
-                  sizes="40px"
+                  sizes="44px"
                   className="object-contain p-0.5"
                 />
               </div>

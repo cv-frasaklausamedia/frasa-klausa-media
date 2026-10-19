@@ -37,3 +37,8 @@ export const USER_RESET_RATE_LIMIT_CONFIG: RateLimitConfig = {
   limit: 3,
   windowSeconds: 15 * 60,
 };
+
+export const CONTACT_RATE_LIMIT_CONFIG: RateLimitConfig = {
+  limit: 5,
+  windowSeconds: 15 * 60, // 5 submisi per 15 menit per kombinasi IP + Email
+};

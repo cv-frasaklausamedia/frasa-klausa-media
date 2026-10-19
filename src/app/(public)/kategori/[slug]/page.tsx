@@ -7,6 +7,8 @@ import { getPublicBooks } from '@/lib/books/data-access';
 import { publicCatalogQuerySchema } from '@/validations/book';
 import { BookCard } from '@/components/public/book-card';
 import { Pagination } from '@/components/public/pagination';
+import { JsonLd } from '@/components/public/json-ld';
+import { buildBreadcrumbJsonLd } from '@/lib/seo/json-ld';
 import { OFFICIAL_IDENTITY } from '@/constants';
 
 import { Suspense } from 'react';
@@ -20,10 +22,10 @@ interface CategoryPageProps {
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
+  searchParams,
+}: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
+  const rawParams = await searchParams;
   const category = await getCategoryBySlug(slug);
 
   if (!category) {
@@ -32,15 +34,38 @@ export async function generateMetadata({
     };
   }
 
+  const isFiltered = Boolean(
+    rawParams.minPrice || rawParams.maxPrice || rawParams.q || (rawParams.page && Number(rawParams.page) > 1)
+  );
+
+  const title = category.seo_title || `Katalog Buku Kategori ${category.name} | ${OFFICIAL_IDENTITY.COMPANY_NAME}`;
+  const description =
+    category.seo_description ||
+    category.description ||
+    `Temukan seluruh buku berkualitas kategori ${category.name} terbitan Frasa Klausa Media.`;
+
   return {
-    title: category.seo_title || `Katalog Buku Kategori ${category.name} | ${OFFICIAL_IDENTITY.COMPANY_NAME}`,
-    description:
-      category.seo_description ||
-      category.description ||
-      `Temukan seluruh buku berkualitas kategori ${category.name} terbitan Frasa Klausa Media.`,
+    title,
+    description,
     alternates: {
       canonical: `/kategori/${slug}`,
     },
+    openGraph: {
+      type: 'website',
+      url: `/kategori/${slug}`,
+      title,
+      description,
+      images: [{ url: '/logo/logo-landscape.jpg', width: 1200, height: 630, alt: category.name }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/logo/logo-landscape.jpg'],
+    },
+    robots: isFiltered
+      ? { index: false, follow: true }
+      : { index: true, follow: true },
   };
 }
 
@@ -62,8 +87,19 @@ async function CategoryContent({ params, searchParams }: CategoryPageProps) {
   const booksResponse = await getPublicBooks(queryParams);
   const { items: books, totalCount, page, pageCount } = booksResponse;
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://frasaklausamedia.com';
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd(
+    [
+      { name: 'Beranda', url: '/' },
+      { name: 'Katalog Buku', url: '/katalog' },
+      { name: category.name, url: `/kategori/${category.slug}` },
+    ],
+    baseUrl
+  );
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+      <JsonLd data={breadcrumbJsonLd} />
       {/* 1. Breadcrumb */}
       <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <Link href="/" className="hover:text-foreground transition-colors">

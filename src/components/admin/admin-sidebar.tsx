@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Suspense } from 'react';
-import { BookMarked } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
 import {
   Sidebar,
   SidebarContent,
@@ -17,9 +18,19 @@ export function AdminSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="h-14 shrink-0 flex-row items-center justify-between border-b border-border px-3.5 py-0">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <BookMarked className="h-5 w-5" />
+        <Link
+          href="/admin"
+          className="flex items-center gap-3 min-w-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-sidebar-ring rounded-lg transition-opacity hover:opacity-95"
+        >
+          <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-xl border border-border/70 bg-white p-0.5 shadow-xs ring-1 ring-black/5 transition-transform duration-200 hover:scale-[1.03] dark:border-white/15 dark:ring-white/10 dark:bg-white">
+            <Image
+              src="/logo/logo.jpg"
+              alt={OFFICIAL_IDENTITY.COMPANY_NAME}
+              fill
+              sizes="36px"
+              className="object-contain p-0.5"
+              priority
+            />
           </div>
           <div className="flex-col overflow-hidden max-md:flex hidden xl:flex xl:sidebar-collapsed:hidden">
             <span className="truncate text-sm font-bold tracking-tight text-sidebar-foreground leading-tight">
@@ -29,7 +40,7 @@ export function AdminSidebar() {
               Panel Pengelola CMS
             </span>
           </div>
-        </div>
+        </Link>
       </SidebarHeader>
 
       <SidebarContent>

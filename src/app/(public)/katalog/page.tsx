@@ -24,14 +24,30 @@ export async function generateMetadata({ searchParams }: KatalogPageProps): Prom
   // Hindari indexing duplikat untuk kombinasi filter rentang harga / pencarian tertentu (Tahap 12 alignment)
   const isFiltered = Boolean(parsed.kategori || parsed.minPrice || parsed.maxPrice || parsed.q);
 
+  const title = parsed.kategori
+    ? `Katalog Buku Kategori ${parsed.kategori} | ${OFFICIAL_IDENTITY.COMPANY_NAME}`
+    : `Katalog Buku Lengkap | ${OFFICIAL_IDENTITY.COMPANY_NAME}`;
+  const description =
+    'Jelajahi karya sastra, novel, antologi puisi, dan buku berkualitas terbitan Frasa Klausa Media dengan filter kategori dan rentang harga.';
+
   return {
-    title: parsed.kategori
-      ? `Katalog Buku Kategori ${parsed.kategori} | ${OFFICIAL_IDENTITY.COMPANY_NAME}`
-      : `Katalog Buku Lengkap | ${OFFICIAL_IDENTITY.COMPANY_NAME}`,
-    description:
-      'Jelajahi karya sastra, novel, antologi puisi, dan buku berkualitas terbitan Frasa Klausa Media dengan filter kategori dan rentang harga.',
+    title,
+    description,
     alternates: {
       canonical: '/katalog',
+    },
+    openGraph: {
+      type: 'website',
+      url: '/katalog',
+      title,
+      description,
+      images: [{ url: '/logo/logo-landscape.jpg', width: 1200, height: 630, alt: 'Katalog Buku Frasa Klausa Media' }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/logo/logo-landscape.jpg'],
     },
     robots: isFiltered
       ? { index: false, follow: true }

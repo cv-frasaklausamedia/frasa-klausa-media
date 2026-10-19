@@ -11,6 +11,7 @@ import {
   AUTH_RATE_LIMIT_CONFIG,
   USER_CREATE_RATE_LIMIT_CONFIG,
   USER_RESET_RATE_LIMIT_CONFIG,
+  CONTACT_RATE_LIMIT_CONFIG,
 } from './types';
 
 /**
@@ -40,6 +41,11 @@ export const userCreateRateLimiter = createRateLimiter(USER_CREATE_RATE_LIMIT_CO
  * Instance Rate Limiter untuk reset password user
  */
 export const userResetRateLimiter = createRateLimiter(USER_RESET_RATE_LIMIT_CONFIG);
+
+/**
+ * Instance Rate Limiter untuk formulir kontak publik (IP + Email)
+ */
+export const contactRateLimiter = createRateLimiter(CONTACT_RATE_LIMIT_CONFIG);
 
 /**
  * Mengekstrak alamat IP klien dari request headers Next.js

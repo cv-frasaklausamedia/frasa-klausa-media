@@ -6,6 +6,8 @@ import { getPublicBookBySlug, getRelatedBooks } from '@/lib/books/data-access';
 import { BookGallery } from '@/components/public/book-gallery';
 import { CheckoutActions } from '@/components/public/checkout-actions';
 import { BookCard } from '@/components/public/book-card';
+import { JsonLd } from '@/components/public/json-ld';
+import { buildBookJsonLd, buildBreadcrumbJsonLd } from '@/lib/seo/json-ld';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatRupiah } from '@/validations/book';
@@ -30,19 +32,29 @@ export async function generateMetadata({ params }: BookDetailPageProps): Promise
   }
 
   const effectivePrice = book.price_promo && book.price_promo > 0 ? book.price_promo : book.price_regular;
+  const title = book.seo_title || `${book.title} - ${book.author} | ${OFFICIAL_IDENTITY.COMPANY_NAME}`;
+  const description =
+    book.seo_description ||
+    `Pesan buku ${book.title} karya ${book.author} seharga ${formatRupiah(effectivePrice)} terbitan ${book.publisher}.`;
 
   return {
-    title: book.seo_title || `${book.title} - ${book.author} | ${OFFICIAL_IDENTITY.COMPANY_NAME}`,
-    description:
-      book.seo_description ||
-      `Pesan buku ${book.title} karya ${book.author} seharga ${formatRupiah(effectivePrice)} terbitan ${book.publisher}.`,
+    title,
+    description,
     alternates: {
       canonical: `/buku/${slug}`,
     },
     openGraph: {
+      type: 'book',
+      url: `/buku/${slug}`,
       title: `${book.title} — ${book.author}`,
-      description: book.seo_description || `Karya literasi terbitan Frasa Klausa Media`,
-      images: book.cover_url ? [{ url: book.cover_url, alt: book.title }] : undefined,
+      description,
+      images: book.cover_url ? [{ url: book.cover_url, alt: book.title }] : [{ url: '/logo/logo-landscape.jpg', width: 1200, height: 630, alt: book.title }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${book.title} — ${book.author}`,
+      description,
+      images: book.cover_url ? [book.cover_url] : ['/logo/logo-landscape.jpg'],
     },
   };
 }
@@ -74,8 +86,22 @@ async function BookDetailContent({ params }: BookDetailPageProps) {
     ? Math.round(((book.price_regular - (book.price_promo ?? 0)) / book.price_regular) * 100)
     : 0;
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://frasaklausamedia.com';
+  const bookJsonLd = buildBookJsonLd(book, baseUrl);
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd(
+    [
+      { name: 'Beranda', url: '/' },
+      { name: 'Katalog', url: '/katalog' },
+      { name: book.category_name, url: `/katalog?kategori=${encodeURIComponent(book.category_name)}` },
+      { name: book.title, url: `/buku/${book.slug}` },
+    ],
+    baseUrl
+  );
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-12">
+      <JsonLd data={bookJsonLd} />
+      <JsonLd data={breadcrumbJsonLd} />
       {/* 1. Breadcrumb Navigasi */}
       <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
         <Link href="/" className="hover:text-foreground transition-colors">

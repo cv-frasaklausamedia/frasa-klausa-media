@@ -33,14 +33,14 @@ export function Navbar() {
 
           <Link
             href="/"
-            className="flex items-center gap-2.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring rounded-md"
+            className="group flex items-center gap-2.5 sm:gap-3 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring rounded-lg transition-opacity hover:opacity-95"
           >
-            <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md border bg-background">
+            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-border/70 bg-white p-0.5 shadow-xs ring-1 ring-black/5 transition-transform duration-200 group-hover:scale-[1.03] dark:border-white/15 dark:ring-white/10 dark:bg-white">
               <Image
-                src="/logo/logo.png"
+                src="/logo/logo.jpg"
                 alt={OFFICIAL_IDENTITY.COMPANY_NAME}
                 fill
-                sizes="36px"
+                sizes="40px"
                 className="object-contain p-0.5"
                 priority
               />

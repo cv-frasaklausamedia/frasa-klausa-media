@@ -5,6 +5,8 @@ import { ArrowRight, Sparkles, BookOpen, Layers, Newspaper, HeartHandshake, Chec
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BookCard } from '@/components/public/book-card';
+import { JsonLd } from '@/components/public/json-ld';
+import { buildOrganizationJsonLd, buildWebSiteJsonLd } from '@/lib/seo/json-ld';
 import { getSiteContentRecord } from '@/lib/site-content/data-access';
 import { getFeaturedBooks, getLatestBooks } from '@/lib/books/data-access';
 import { getPopularBookCategories } from '@/lib/categories/data-access';
@@ -19,16 +21,30 @@ export const metadata: Metadata = {
   title: `${OFFICIAL_IDENTITY.COMPANY_NAME} — Penerbit Buku & Media Literasi`,
   description:
     'Platform penerbitan literasi modern dan toko buku resmi Frasa Klausa Media. Menghadirkan karya sastra, novel, puisi, dan tulisan inspiratif berkualitas tinggi.',
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     title: `${OFFICIAL_IDENTITY.COMPANY_NAME} — Penerbit Buku & Media Literasi`,
     description:
       'Platform penerbitan literasi modern dan toko buku resmi Frasa Klausa Media. Menghadirkan karya sastra, novel, puisi, dan tulisan inspiratif.',
-    images: [{ url: '/logo/logo.png', width: 800, height: 800, alt: OFFICIAL_IDENTITY.COMPANY_NAME }],
+    url: '/',
+    siteName: OFFICIAL_IDENTITY.COMPANY_NAME,
+    images: [{ url: '/logo/logo-landscape.jpg', width: 1200, height: 630, alt: OFFICIAL_IDENTITY.COMPANY_NAME }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: `${OFFICIAL_IDENTITY.COMPANY_NAME} — Penerbit Buku & Media Literasi`,
+    description:
+      'Platform penerbitan literasi modern dan toko buku resmi Frasa Klausa Media. Menghadirkan karya sastra, novel, puisi, dan tulisan inspiratif.',
+    images: ['/logo/logo-landscape.jpg'],
   },
 };
 
 async function HomePageContent() {
   await connection();
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://frasaklausamedia.com';
+
   // Ambil seluruh data beranda secara paralel di server lewat Data-Access Layer
   const [hero, about, featuredBooks, latestBooks, popularCategories, latestPosts] =
     await Promise.all([
@@ -52,8 +68,13 @@ async function HomePageContent() {
       }),
     ]);
 
+  const orgJsonLd = buildOrganizationJsonLd(baseUrl);
+  const websiteJsonLd = buildWebSiteJsonLd(baseUrl);
+
   return (
     <div className="flex flex-col gap-16 md:gap-24 pb-20">
+      <JsonLd data={orgJsonLd} />
+      <JsonLd data={websiteJsonLd} />
       {/* 1. HERO SECTION DINAMIS DARI CMS */}
       <section className="relative overflow-hidden border-b bg-gradient-to-b from-muted/40 via-background to-background py-16 sm:py-24 lg:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

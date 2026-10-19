@@ -2,7 +2,7 @@ export const OFFICIAL_IDENTITY = {
   COMPANY_NAME: 'Frasa Klausa Media',
   TAGLINE: 'Mewujudkan Naskah Menjadi Buku',
   LEGAL_NAME: 'PT Frasa Klausa Media',
-  EMAIL: 'redaksi@frasaklausamedia.com',
+  EMAIL: 'frasaklausamedia@gmail.com',
   PHONE: '0813-8060-4256',
   WHATSAPP: '6281380604256',
   ADDRESS: 'Jl. Literasi Nusantara No. 10, Jakarta Selatan, DKI Jakarta 12340',

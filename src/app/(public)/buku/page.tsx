@@ -1,4 +1,9 @@
-import PublicKatalogPage, { generateMetadata } from '../katalog/page';
+import { permanentRedirect } from 'next/navigation';
 
-export { generateMetadata };
-export default PublicKatalogPage;
+/**
+ * Halaman alias /buku dialihkan secara permanen (HTTP 308) ke /katalog.
+ * Mencegah kanibalisasi kata kunci dan duplicate content antara /buku dan /katalog.
+ */
+export default function BukuRedirectPage() {
+  permanentRedirect('/katalog');
+}

@@ -158,16 +158,18 @@ export function KatalogFilterBar({
               <Input
                 type="number"
                 placeholder="Min"
+                aria-label="Harga minimum (IDR)"
                 value={minPriceInput}
                 onChange={(e) => setMinPriceInput(e.target.value)}
                 className="h-9 text-xs"
                 min="0"
                 step="5000"
               />
-              <span className="text-muted-foreground text-xs">—</span>
+              <span className="text-muted-foreground text-xs" aria-hidden="true">—</span>
               <Input
                 type="number"
                 placeholder="Max"
+                aria-label="Harga maksimum (IDR)"
                 value={maxPriceInput}
                 onChange={(e) => setMaxPriceInput(e.target.value)}
                 className="h-9 text-xs"

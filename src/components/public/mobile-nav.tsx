@@ -67,13 +67,13 @@ export function MobileNav() {
       <SheetContent side="left" className="flex flex-col w-[300px] sm:w-[350px] p-0">
         <SheetHeader className="p-6 pb-4 border-b text-left">
           <div className="flex items-center gap-3">
-            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border bg-background">
+            <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-border/70 bg-white p-0.5 shadow-xs ring-1 ring-black/5 dark:border-white/15 dark:ring-white/10 dark:bg-white">
               <Image
-                src="/logo/logo.png"
+                src="/logo/logo.jpg"
                 alt={OFFICIAL_IDENTITY.COMPANY_NAME}
                 fill
-                sizes="40px"
-                className="object-contain p-1"
+                sizes="44px"
+                className="object-contain p-0.5"
               />
             </div>
             <div>

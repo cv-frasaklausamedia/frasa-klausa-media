@@ -780,12 +780,12 @@ tersimpan dan terlihat di admin.
 **Referensi PRD:** §10.7, §11, §16.1–16.4.
 
 **Deliverables**
-- [ ] Metadata API dinamis, OpenGraph/Twitter card, OG image, canonical, title/description unik.
-- [ ] JSON-LD Book schema (detail buku) & data terstruktur lain yang sesuai.
-- [ ] `sitemap.ts` (hanya URL canonical & terindeks) dan `robots.ts`; admin/auth/preview `noindex`.
-- [ ] Audit Core Web Vitals (LCP < 2.5s, CLS < 0.1, INP baik) & perbaikan.
-- [ ] Audit aksesibilitas (keyboard, kontras, heading, reduced motion).
-- [ ] Strategi cache/revalidation terdokumentasi.
+- [x] Metadata API dinamis, OpenGraph/Twitter card, OG image, canonical, title/description unik.
+- [x] JSON-LD Book schema (detail buku) & data terstruktur lain yang sesuai.
+- [x] `sitemap.ts` (hanya URL canonical & terindeks) dan `robots.ts`; admin/auth/preview `noindex`.
+- [x] Audit Core Web Vitals (LCP < 2.5s, CLS < 0.1, INP baik) & perbaikan.
+- [x] Audit aksesibilitas (keyboard, kontras, heading, reduced motion).
+- [x] Strategi cache/revalidation terdokumentasi.
 
 **Prompt**
 

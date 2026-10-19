@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { BookOpen } from 'lucide-react';
@@ -5,9 +6,14 @@ import { OFFICIAL_IDENTITY } from '@/constants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoginForm } from './_components/login-form';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Masuk CMS Admin | Frasa Klausa Media',
   description: 'Portal autentikasi khusus Administrator dan Super Admin Frasa Klausa Media',
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+  },
 };
 
 export default function LoginPage() {
