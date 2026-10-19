@@ -112,12 +112,11 @@ const superAdminNavItems: NavItem[] = [
 
 export function AdminSidebar({ user }: AdminSidebarProps) {
   const pathname = usePathname();
-  const { isMobile, setOpenMobile } = useSidebar();
+  const { setOpenMobile } = useSidebar();
 
   const handleLinkClick = () => {
-    if (isMobile) {
-      setOpenMobile(false);
-    }
+    // Tutup drawer mobile & overlay tablet ketika berpindah rute
+    setOpenMobile(false);
   };
 
   const isItemActive = (href: string) => {
@@ -129,8 +128,8 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border px-4 py-3">
-        <div className="flex items-center gap-3">
+      <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
+        <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
             <BookMarked className="h-5 w-5" />
           </div>
@@ -219,6 +218,11 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
           <span className="text-[11px] text-muted-foreground group-data-[collapsible=icon]:hidden">
             v1.0
           </span>
+          <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center">
+            <Badge variant="outline" className="text-[9px] uppercase font-mono px-1.5 py-0.5">
+              {user.role === 'super_admin' ? 'SA' : 'A'}
+            </Badge>
+          </div>
         </div>
       </SidebarFooter>
 

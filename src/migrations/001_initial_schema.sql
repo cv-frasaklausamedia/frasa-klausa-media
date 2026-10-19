@@ -246,10 +246,30 @@ AS $$
 DECLARE
   v_caller_role public.user_role;
   v_caller_active boolean;
+  v_has_super_admin boolean;
 BEGIN
   -- Jika role atau is_active diubah:
   IF (NEW.role IS DISTINCT FROM OLD.role) OR (NEW.is_active IS DISTINCT FROM OLD.is_active) THEN
-    -- Ambil role pemanggil dari profiles
+
+    -- 1. Database Admin / SQL Editor / Service Role bypass:
+    -- Ketika query dijalankan via SQL Editor atau koneksi direct psql, auth.uid() bernilai NULL.
+    IF auth.uid() IS NULL THEN
+      RETURN NEW;
+    END IF;
+
+    -- 2. Bootstrap Mode:
+    -- Jika sistem belum memiliki satupun Super Admin aktif, izinkan promosi akun menjadi super_admin
+    SELECT EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE role = 'super_admin' AND is_active = true
+    ) INTO v_has_super_admin;
+
+    IF NOT v_has_super_admin AND NEW.role = 'super_admin' THEN
+      RETURN NEW;
+    END IF;
+
+    -- 3. Request melalui Web / PostgREST API (auth.uid() IS NOT NULL):
+    -- Ambil role dan status aktif pemanggil dari tabel profiles
     SELECT role, is_active INTO v_caller_role, v_caller_active
     FROM public.profiles
     WHERE id = auth.uid();
@@ -259,7 +279,7 @@ BEGIN
       RAISE EXCEPTION 'Hanya Super Admin aktif yang berhak mengubah peran (role) atau status aktif pengguna.';
     END IF;
 
-    -- User tidak boleh mengubah status role atau aktif miliknya sendiri
+    -- User tidak boleh mengubah status role miliknya sendiri untuk mencegah penguncian sistem (lockout)
     IF auth.uid() = OLD.id AND NEW.role IS DISTINCT FROM OLD.role THEN
       RAISE EXCEPTION 'Super Admin tidak diperbolehkan mengubah role akun miliknya sendiri untuk mencegah penguncian sistem.';
     END IF;

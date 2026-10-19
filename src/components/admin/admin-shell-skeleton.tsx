@@ -2,11 +2,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export function AdminShellSkeleton() {
   return (
-    <div className="flex min-h-screen w-full bg-background">
-      {/* Sidebar Skeleton (Matching expanded 16rem width) */}
-      <div className="hidden md:flex flex-col w-64 border-r border-sidebar-border bg-sidebar p-4 space-y-4">
+    <div className="flex min-h-screen w-full overflow-x-hidden bg-background">
+      {/* Sidebar Skeleton Desktop: Expanded 16rem / 256px (>= 1280px / xl) */}
+      <div className="hidden xl:flex flex-col w-64 border-r border-sidebar-border bg-sidebar p-4 space-y-4 shrink-0">
         <div className="flex items-center gap-3 py-2 border-b border-sidebar-border pb-4">
-          <Skeleton className="h-9 w-9 rounded-lg" />
+          <Skeleton className="h-9 w-9 rounded-lg shrink-0" />
           <div className="space-y-1.5 flex-1">
             <Skeleton className="h-4 w-28" />
             <Skeleton className="h-3 w-20" />
@@ -21,6 +21,17 @@ export function AdminShellSkeleton() {
           <Skeleton className="h-4 w-16" />
           <Skeleton className="h-3 w-8" />
         </div>
+      </div>
+
+      {/* Sidebar Skeleton Tablet: Collapsed 4.5rem / 72px (768px - 1279px / md to xl-1) */}
+      <div className="hidden md:flex xl:hidden flex-col w-[72px] border-r border-sidebar-border bg-sidebar p-3 space-y-4 shrink-0 items-center">
+        <Skeleton className="h-9 w-9 rounded-lg shrink-0" />
+        <div className="space-y-3 flex-1 pt-4 w-full flex flex-col items-center">
+          {Array.from({ length: 9 }).map((_, i) => (
+            <Skeleton key={i} className="h-9 w-9 rounded-md" />
+          ))}
+        </div>
+        <Skeleton className="h-5 w-8 rounded" />
       </div>
 
       {/* Main Content Area Skeleton */}
