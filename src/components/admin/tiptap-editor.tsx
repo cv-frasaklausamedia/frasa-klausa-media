@@ -1,8 +1,10 @@
 'use client';
 
+import { useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
+import Image from '@tiptap/extension-image';
 import {
   Bold,
   Italic,
@@ -16,6 +18,8 @@ import {
   Code,
   Link as LinkIcon,
   Unlink,
+  Image as ImageIcon,
+  Loader2,
   Undo,
   Redo,
 } from 'lucide-react';
@@ -24,18 +28,27 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-interface TiptapEditorProps {
+export interface TiptapEditorProps {
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  allowImages?: boolean;
+  onImageUpload?: (file: File) => Promise<{ url: string; path?: string }>;
+  onImageInserted?: (path: string) => void;
 }
 
 export function TiptapEditor({
   value,
   onChange,
   disabled = false,
+  allowImages = false,
+  onImageUpload,
+  onImageInserted,
 }: TiptapEditorProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
   const editor = useEditor({
     immediatelyRender: false,
     editable: !disabled,
@@ -54,6 +67,18 @@ export function TiptapEditor({
           class: 'text-primary underline underline-offset-4 font-medium',
         },
       }),
+      ...(allowImages
+        ? [
+            Image.configure({
+              inline: false,
+              allowBase64: false,
+              HTMLAttributes: {
+                class: 'rounded-lg max-w-full h-auto my-4 shadow-sm border border-border/40',
+                loading: 'lazy',
+              },
+            }),
+          ]
+        : []),
     ],
     content: value || '',
     onUpdate: ({ editor: currentEditor }) => {
@@ -91,18 +116,99 @@ export function TiptapEditor({
       return;
     }
 
-    // Hanya izinkan skema aman
+    // Hanya izinkan skema aman http, https, mailto (PRD §15.5)
     if (!/^https?:\/\//i.test(url) && !/^mailto:/i.test(url)) {
-      toast.error('Tautan hanya boleh diawali dengan https:// atau mailto:');
+      toast.error('Tautan hanya boleh diawali dengan https://, http:// atau mailto:');
       return;
     }
 
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+    editor
+      .chain()
+      .focus()
+      .extendMarkRange('link')
+      .setLink({
+        href: url,
+        target: '_blank',
+        rel: 'noopener noreferrer',
+      })
+      .run();
+  };
+
+  const handleImageButtonClick = () => {
+    if (onImageUpload) {
+      fileInputRef.current?.click();
+    } else {
+      const url = window.prompt('Masukkan URL gambar (https://...):');
+      if (url && /^https?:\/\//i.test(url)) {
+        const alt = window.prompt('Teks alternatif gambar (opsional):') || '';
+        editor.chain().focus().setImage({ src: url, alt }).run();
+      } else if (url) {
+        toast.error('URL gambar harus menggunakan protokol http:// atau https://');
+      }
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset input agar file yang sama bisa dipilih lagi jika diperlukan
+    e.target.value = '';
+
+    // Validasi tipe berkas klien
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Format gambar tidak didukung. Harap pilih JPEG, PNG, atau WebP.');
+      return;
+    }
+
+    // Validasi ukuran berkas klien (maks 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ukuran gambar melebihi batas maksimal 5 MB.');
+      return;
+    }
+
+    if (!onImageUpload) return;
+
+    try {
+      setIsUploadingImage(true);
+      const result = await onImageUpload(file);
+      if (result && result.url) {
+        const altText = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+        editor
+          .chain()
+          .focus()
+          .setImage({ src: result.url, alt: altText })
+          .run();
+
+        if (result.path && onImageInserted) {
+          onImageInserted(result.path);
+        }
+        toast.success('Gambar berhasil diunggah dan disisipkan.');
+      }
+    } catch (err) {
+      console.error('[TiptapEditor] Gagal mengunggah gambar inline:', err);
+      toast.error('Gagal mengunggah gambar. Silakan coba kembali.');
+    } finally {
+      setIsUploadingImage(false);
+    }
   };
 
   return (
     <div className="rounded-md border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-      {/* Toolbar Tiptap (Heading 2-4, Bold, Italic, Strike, Lists, Quote, Code, Link, Undo/Redo) */}
+      {/* Hidden input untuk pemilihan berkas gambar inline */}
+      {allowImages && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={handleFileChange}
+          disabled={disabled || isUploadingImage}
+        />
+      )}
+
+      {/* Toolbar Tiptap (Heading 2-4, Bold, Italic, Strike, Lists, Quote, Code, Link, Image, Undo/Redo) */}
       <div className="flex flex-wrap items-center gap-1 border-b bg-muted/40 p-1.5">
         <Button
           type="button"
@@ -254,6 +360,27 @@ export function TiptapEditor({
           >
             <Unlink className="h-4 w-4 text-destructive" />
           </Button>
+        )}
+
+        {allowImages && (
+          <>
+            <div className="h-4 w-px bg-border mx-1" />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={handleImageButtonClick}
+              disabled={disabled || isUploadingImage}
+              title="Sisipkan Gambar Inline"
+            >
+              {isUploadingImage ? (
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              ) : (
+                <ImageIcon className="h-4 w-4" />
+              )}
+            </Button>
+          </>
         )}
 
         <div className="h-4 w-px bg-border mx-1" />

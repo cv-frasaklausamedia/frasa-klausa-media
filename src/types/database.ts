@@ -278,6 +278,7 @@ export interface Database {
           category_id: string;
           status: PostStatus;
           published_at: string | null;
+          reading_time_minutes: number;
           seo_title: string | null;
           seo_description: string | null;
           tags: string[];
@@ -296,6 +297,7 @@ export interface Database {
           category_id: string;
           status?: PostStatus;
           published_at?: string | null;
+          reading_time_minutes?: number;
           seo_title?: string | null;
           seo_description?: string | null;
           tags?: string[];
@@ -314,6 +316,7 @@ export interface Database {
           category_id?: string;
           status?: PostStatus;
           published_at?: string | null;
+          reading_time_minutes?: number;
           seo_title?: string | null;
           seo_description?: string | null;
           tags?: string[];

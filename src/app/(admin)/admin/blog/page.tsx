@@ -1,51 +1,95 @@
 import { Suspense } from 'react';
 import { connection } from 'next/server';
 import type { Metadata } from 'next';
-import { FileText } from 'lucide-react';
+import Link from 'next/link';
+import { AlertCircle, RotateCcw } from 'lucide-react';
+
 import { requireAdmin } from '@/lib/auth';
-import { UnderDevelopment } from '@/components/admin/under-development';
-import { Skeleton } from '@/components/ui/skeleton';
+import { postQuerySchema } from '@/validations/post';
+import { getAdminPosts, getBlogCategoriesOptions } from '@/lib/posts/data-access';
+import type { PostListResponse, BlogCategoryOption } from '@/lib/posts/types';
+import { Button } from '@/components/ui/button';
+import { PostTable } from './_components/post-table';
+import BlogLoading from './loading';
 
 export const metadata: Metadata = {
   title: 'Artikel Blog — Admin Frasa Klausa Media',
-  description: 'Kelola artikel literasi, berita peluncuran buku, dan publikasi opini Frasa Klausa Media.',
+  description: 'Kelola artikel literasi, berita peluncuran buku, dan opini editorial dengan editor visual modern.',
 };
 
-async function BlogContent() {
+interface AdminBlogPageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+async function BlogContent({ searchParams }: AdminBlogPageProps) {
+  // Opt-in ke dynamic request-time rendering untuk Partial Prerendering
   await connection();
   await requireAdmin();
 
-  return (
-    <UnderDevelopment
-      title="Artikel & Publikasi Blog"
-      description="Tulis dan kelola artikel literasi, berita peluncuran buku, ulasan karya, dan opini editorial dengan editor visual modern."
-      icon={FileText}
-      estimatedPhase="Tahap 6 — Manajemen Blog & Rich Text Editor Tiptap"
-      plannedFeatures={[
-        'CRUD artikel literasi, liputan acara, dan esai sastra/opini pembaca',
-        'Editor visual Tiptap Rich Text Editor (heading, list, gambar embed, quote, dan link)',
-        'Sanitasi ketat output HTML di server menggunakan isomorphic-dompurify untuk proteksi keamanan XSS',
-        'Penetapan nama penulis artikel (author_name) fleksibel untuk mengakomodasi kontributor tamu',
-        'Unggah thumbnail artikel ke Supabase Storage dengan rasio gambar 16:9 yang teroptimasi',
-        'Estimasi waktu baca otomatis (reading time) yang dihitung berdasarkan kepadatan kata',
-        'Manajemen status publikasi: Simpan Draf (Draft) atau Terbitkan (Published)',
-        'Pengaturan metadata SEO artikel (Open Graph title, description, dan slug URL unik)',
-      ]}
-    />
-  );
+  const rawParams = await searchParams;
+
+  // Validasi defensif parameter URL query string menggunakan Zod (PRD §15.4)
+  const queryParams = postQuerySchema.parse(rawParams);
+
+  let postData: PostListResponse | null = null;
+  let categories: BlogCategoryOption[] = [];
+  let hasError = false;
+
+  try {
+    const [fetchedPosts, fetchedCategories] = await Promise.all([
+      getAdminPosts(queryParams),
+      getBlogCategoriesOptions(),
+    ]);
+    postData = fetchedPosts;
+    categories = fetchedCategories;
+  } catch (error) {
+    console.error('[AdminBlogPage] Error loading blog list:', error);
+    hasError = true;
+  }
+
+  if (hasError || !postData) {
+    return (
+      <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-6 text-center">
+        <div className="flex flex-col items-center justify-center gap-3">
+          <div className="rounded-full bg-destructive/10 p-3 text-destructive">
+            <AlertCircle className="h-6 w-6" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-base font-semibold text-foreground">
+              Gagal Memuat Data Artikel
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Terjadi kendala saat menghubungi basis data. Silakan periksa koneksi atau muat ulang halaman.
+            </p>
+          </div>
+          <Button asChild variant="outline" size="sm" className="mt-2">
+            <Link href="/admin/blog">
+              <RotateCcw className="mr-2 h-4 w-4" /> Coba Lagi
+            </Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return <PostTable initialData={postData} categories={categories} />;
 }
 
-export default function AdminBlogPage() {
+export default function AdminBlogPage({ searchParams }: AdminBlogPageProps) {
   return (
-    <Suspense
-      fallback={
-        <div className="space-y-4 max-w-5xl">
-          <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-64 w-full rounded-xl" />
-        </div>
-      }
-    >
-      <BlogContent />
-    </Suspense>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          Artikel & Publikasi Blog
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Tulis dan kelola artikel literasi, berita peluncuran buku, ulasan karya, dan opini editorial dengan editor Tiptap modern.
+        </p>
+      </div>
+
+      <Suspense fallback={<BlogLoading />}>
+        <BlogContent searchParams={searchParams} />
+      </Suspense>
+    </div>
   );
 }
