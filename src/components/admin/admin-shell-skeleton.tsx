@@ -47,7 +47,7 @@ export function AdminShellSkeleton() {
           </div>
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8">
-          <div className="space-y-6 max-w-7xl mx-auto">
+          <div className="space-y-6">
             <div className="space-y-2">
               <Skeleton className="h-8 w-64" />
               <Skeleton className="h-4 w-96 max-w-full" />

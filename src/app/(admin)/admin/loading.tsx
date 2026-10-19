@@ -4,7 +4,7 @@ import { DashboardChartSkeleton } from '@/components/admin/dashboard-chart-skele
 
 export default function AdminDashboardLoading() {
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6">
       {/* Header Skeleton */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-2">

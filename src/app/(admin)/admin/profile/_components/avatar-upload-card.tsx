@@ -81,20 +81,38 @@ export function AvatarUploadCard({ currentAvatarUrl, fullName }: AvatarUploadCar
 
   return (
     <div className="flex flex-col items-center justify-center p-6 text-center">
-      <div className="relative group">
-        <Avatar className="h-28 w-28 border-2 border-border shadow-md">
-          <AvatarImage src={previewUrl ?? undefined} alt={fullName} />
-          <AvatarFallback className="bg-primary/10 text-primary font-bold text-2xl">
-            {getInitials(fullName)}
-          </AvatarFallback>
-        </Avatar>
+      {/* Wrapper Avatar Terstruktur & Proporsional */}
+      <div className="relative inline-flex items-center justify-center">
+        {/* Frame Lingkaran Luar dengan Double Ring & Shadow */}
+        <div className="relative rounded-full p-1 bg-gradient-to-b from-border/70 to-border/20 shadow-md">
+          <Avatar className="h-32 w-32 border-2 border-background shadow-inner">
+            <AvatarImage
+              src={previewUrl ?? undefined}
+              alt={fullName}
+              className="aspect-square h-full w-full object-cover"
+            />
+            <AvatarFallback className="bg-primary/10 text-primary font-bold text-3xl select-none">
+              {getInitials(fullName)}
+            </AvatarFallback>
+          </Avatar>
 
+          {/* Frosted Loading Overlay saat proses upload */}
+          {isUploading && (
+            <div className="absolute inset-1 flex flex-col items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-xs z-10 transition-all">
+              <Loader2 className="h-7 w-7 animate-spin mb-1 text-primary-foreground" />
+              <span className="text-[10px] font-medium tracking-wide">Mengunggah...</span>
+            </div>
+          )}
+        </div>
+
+        {/* Floating Camera Button dengan Ring Separator */}
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow transition hover:opacity-90 disabled:opacity-50 cursor-pointer"
+          className="absolute bottom-1 right-1 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-3 ring-background transition-transform duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer z-20"
           aria-label="Pilih foto profil baru"
+          title="Ganti foto profil"
         >
           {isUploading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -113,8 +131,8 @@ export function AvatarUploadCard({ currentAvatarUrl, fullName }: AvatarUploadCar
         aria-hidden="true"
       />
 
-      <div className="mt-4 space-y-1">
-        <h3 className="font-semibold text-foreground text-sm">{fullName}</h3>
+      <div className="mt-5 space-y-1">
+        <h3 className="font-semibold text-foreground text-sm tracking-tight">{fullName}</h3>
         <p className="text-xs text-muted-foreground">
           Format JPG, PNG, atau WebP. Maksimal 2 MB.
         </p>
@@ -127,7 +145,7 @@ export function AvatarUploadCard({ currentAvatarUrl, fullName }: AvatarUploadCar
           size="sm"
           disabled={isUploading}
           onClick={() => fileInputRef.current?.click()}
-          className="gap-1.5 text-xs"
+          className="gap-1.5 text-xs shadow-xs"
         >
           {isUploading ? (
             <>

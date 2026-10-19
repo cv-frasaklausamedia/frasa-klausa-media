@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AdminProfileLoading() {
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6">
       {/* Header Skeleton */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="space-y-2">
@@ -23,7 +23,7 @@ export default function AdminProfileLoading() {
               <Skeleton className="h-3 w-40" />
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-              <Skeleton className="h-28 w-28 rounded-full mb-4" />
+              <Skeleton className="h-32 w-32 rounded-full mb-4" />
               <Skeleton className="h-4 w-32 mb-2" />
               <Skeleton className="h-3 w-44 mb-4" />
               <Skeleton className="h-8 w-36 rounded-md" />

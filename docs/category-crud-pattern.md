@@ -1,8 +1,8 @@
 # Pola Modul CRUD Admin — Standar Arsitektur & Replikasi
 
 **Acuan:** PRD §6.2.D, §9.3, §10.4, §10.8, §12, §13, §14.3, §15.4  
-**Implementasi Pertama:** Tahap 4 — CMS Kategori (`src/app/(admin)/admin/kategori-buku`)  
-**Tujuan Dokumen:** Menjadi cetak biru (*blueprint*) dan template baku bagi seluruh modul CRUD admin lainnya pada Tahap 5 (CMS Buku), Tahap 6 (CMS Blog), Tahap 7 (Banner Promo & Konten Halaman), dan Tahap 8 (Manajemen Akun).
+**Implementasi Pertama:** Tahap 4 — CMS Kategori (`src/app/(admin)/admin/book-categories`)  
+**Tujuan Dokumen:** Menjadi cetak biru (*blueprint*) dan template baku bagi seluruh modul CRUD admin lainnya pada Tahap 5 (CMS Buku), Tahap 6 (CMS Blog), Tahap 7 (Banner Promo & Konten Halaman), dan Tahap 8 (Manajemen Akun). Lihat juga dokumentasi implementasi lengkap di `docs/category-module.md`.
 
 ---
 
