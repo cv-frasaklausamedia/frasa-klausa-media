@@ -266,6 +266,39 @@ export function extractBooksStoragePath(
   }
 }
 
+/**
+ * Validasi defensif untuk daftar path berkas yang akan dibersihkan dari Storage (cleanup).
+ * Memastikan:
+ * - Input adalah array dengan panjang antara 1 dan 20.
+ * - Setiap path memenuhi BOOKS_STORAGE_PATH_REGEX (folder covers/gallery, nama UUID, ekstensi jpg/png/webp).
+ * - Tidak mengandung path traversal ('..' atau '%2e').
+ * Mengembalikan array path yang sah dan bersih, atau null jika input tidak valid / melebihi batas.
+ */
+export function validateCleanupPaths(paths: unknown): string[] | null {
+  if (!paths || !Array.isArray(paths)) {
+    return null;
+  }
+
+  if (paths.length > 20) {
+    return null;
+  }
+
+  const safePaths: string[] = [];
+  for (const p of paths) {
+    if (typeof p !== 'string') continue;
+    const cleanPath = p.trim().replace(/^\/+/, '');
+    if (
+      !cleanPath.includes('..') &&
+      !cleanPath.includes('%2e') &&
+      BOOKS_STORAGE_PATH_REGEX.test(cleanPath)
+    ) {
+      safePaths.push(cleanPath);
+    }
+  }
+
+  return safePaths;
+}
+
 // ============================================================================
 // 5. SKEMA VALIDASI FORM BUKU (ZOD 3)
 // ============================================================================

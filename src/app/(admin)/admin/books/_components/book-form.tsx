@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useTransition, useEffect, useCallback } from 'react';
+import { useState, useTransition, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useFieldArray, Controller, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Upload,
@@ -25,7 +25,9 @@ import {
   validateImageMagicBytes,
   MAX_BOOK_IMAGE_SIZE_BYTES,
   buildWhatsAppUrl,
+  extractBooksStoragePath,
   type BookFormInput,
+  type BookFormValues,
 } from '@/validations/book';
 import {
   createBookAction,
@@ -81,6 +83,32 @@ export function BookForm({ initialData, categories }: BookFormProps) {
 
   // Lacak path yang diunggah SESI INI di client untuk orphan cleanup jika dibatalkan/gagal
   const [sessionUploadedPaths, setSessionUploadedPaths] = useState<string[]>([]);
+  const sessionUploadedPathsRef = useRef<string[]>([]);
+  const isMountedRef = useRef(true);
+
+  // Selalu sinkronkan ref dengan state terbaru agar cleanup pada unmount tidak membaca state basi
+  useEffect(() => {
+    sessionUploadedPathsRef.current = sessionUploadedPaths;
+  }, [sessionUploadedPaths]);
+
+  // Cleanup saat form di-unmount (misal user navigasi client-side tanpa simpan)
+  // Dilindungi dari simulasi unmount ganda React Strict Mode di development
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      // Beri jeda 150ms: jika komponen re-mount (Strict Mode), cleanup dibatalkan
+      setTimeout(() => {
+        if (!isMountedRef.current && sessionUploadedPathsRef.current.length > 0) {
+          const pathsToClean = [...sessionUploadedPathsRef.current];
+          sessionUploadedPathsRef.current = [];
+          cleanupUploadedFilesAction(pathsToClean).catch((err) => {
+            console.error('[Unmount cleanup] Error:', err);
+          });
+        }
+      }, 150);
+    };
+  }, []);
 
   // State Dialog Pemilih Buku Terkait
   const [relatedModalOpen, setRelatedModalOpen] = useState(false);
@@ -90,7 +118,7 @@ export function BookForm({ initialData, categories }: BookFormProps) {
 
   const isEditing = Boolean(initialData);
 
-  // Form setup dengan RHF + ZodResolver
+  // Form setup dengan RHF + ZodResolver (TFieldValues = BookFormInput, TContext = unknown, TTransformedValues = BookFormValues)
   const {
     register,
     handleSubmit,
@@ -99,9 +127,8 @@ export function BookForm({ initialData, categories }: BookFormProps) {
     setValue,
     setError,
     formState: { errors, isDirty },
-  } = useForm<BookFormInput>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(bookFormSchema) as any,
+  } = useForm<BookFormInput, unknown, BookFormValues>({
+    resolver: zodResolver(bookFormSchema) as Resolver<BookFormInput, unknown, BookFormValues>,
     defaultValues: {
       title: initialData?.title ?? '',
       slug: initialData?.slug ?? '',
@@ -207,8 +234,22 @@ export function BookForm({ initialData, categories }: BookFormProps) {
         return;
       }
 
+      // Jika sebelumnya sudah upload cover pada sesi ini dan diganti lagi, bersihkan file cover sesi sebelumnya
+      const oldCoverUrl = watchedCoverUrl;
+      if (oldCoverUrl) {
+        const oldStoragePath = extractBooksStoragePath(oldCoverUrl);
+        if (oldStoragePath && sessionUploadedPathsRef.current.includes(oldStoragePath)) {
+          cleanupUploadedFilesAction([oldStoragePath]).catch((err) => {
+            console.error('[Cover replace cleanup] Error:', err);
+          });
+          setSessionUploadedPaths((prev) => prev.filter((p) => p !== oldStoragePath));
+          sessionUploadedPathsRef.current = sessionUploadedPathsRef.current.filter((p) => p !== oldStoragePath);
+        }
+      }
+
       setValue('cover_url', res.data.url, { shouldValidate: true, shouldDirty: true });
       setSessionUploadedPaths((prev) => [...prev, res.data.path]);
+      sessionUploadedPathsRef.current = [...sessionUploadedPathsRef.current, res.data.path];
       toast.success('Sampul buku berhasil diunggah.');
     } catch (err) {
       console.error('[handleCoverUpload] Error:', err);
@@ -217,6 +258,22 @@ export function BookForm({ initialData, categories }: BookFormProps) {
       setIsUploadingCover(false);
       e.target.value = '';
     }
+  };
+
+  // Handler Hapus Cover dari Form sebelum disimpan
+  const handleRemoveCover = () => {
+    const currentCoverUrl = watchedCoverUrl;
+    if (currentCoverUrl) {
+      const storagePath = extractBooksStoragePath(currentCoverUrl);
+      if (storagePath && sessionUploadedPathsRef.current.includes(storagePath)) {
+        cleanupUploadedFilesAction([storagePath]).catch((err) => {
+          console.error('[handleRemoveCover cleanup] Error:', err);
+        });
+        setSessionUploadedPaths((prev) => prev.filter((p) => p !== storagePath));
+        sessionUploadedPathsRef.current = sessionUploadedPathsRef.current.filter((p) => p !== storagePath);
+      }
+    }
+    setValue('cover_url', null, { shouldDirty: true, shouldValidate: true });
   };
 
   // Handler Upload Galeri Foto
@@ -259,6 +316,7 @@ export function BookForm({ initialData, categories }: BookFormProps) {
       });
 
       setSessionUploadedPaths((prev) => [...prev, res.data.path]);
+      sessionUploadedPathsRef.current = [...sessionUploadedPathsRef.current, res.data.path];
       toast.success('Gambar galeri ditambahkan.');
     } catch (err) {
       console.error('[handleGalleryUpload] Error:', err);
@@ -269,8 +327,19 @@ export function BookForm({ initialData, categories }: BookFormProps) {
     }
   };
 
-  // Handler Hapus Galeri
+  // Handler Hapus Galeri dari Form sebelum disimpan
   const handleRemoveGallery = (index: number) => {
+    const item = galleryFields[index];
+    if (item?.image_url) {
+      const storagePath = extractBooksStoragePath(item.image_url);
+      if (storagePath && sessionUploadedPathsRef.current.includes(storagePath)) {
+        cleanupUploadedFilesAction([storagePath]).catch((err) => {
+          console.error('[handleRemoveGallery cleanup] Error:', err);
+        });
+        setSessionUploadedPaths((prev) => prev.filter((p) => p !== storagePath));
+        sessionUploadedPathsRef.current = sessionUploadedPathsRef.current.filter((p) => p !== storagePath);
+      }
+    }
     removeGallery(index);
   };
 
@@ -325,12 +394,12 @@ export function BookForm({ initialData, categories }: BookFormProps) {
   };
 
   // Handler Submit Form
-  const onSubmit = async (data: BookFormInput) => {
+  const onSubmit = async (data: BookFormValues) => {
     startTransition(async () => {
       try {
         const res = isEditing && initialData
-          ? await updateBookAction(initialData.id, data, sessionUploadedPaths)
-          : await createBookAction(data, sessionUploadedPaths);
+          ? await updateBookAction(initialData.id, data)
+          : await createBookAction(data);
 
         if (!res.ok) {
           // Tangani field errors spesifik dari Server Action
@@ -362,7 +431,8 @@ export function BookForm({ initialData, categories }: BookFormProps) {
             : `Buku "${data.title}" berhasil ditambahkan ke katalog.`
         );
 
-        // Bersihkan state tracking sesi setelah sukses
+        // KOSONGKAN ref SEBELUM router.push agar unmount cleanup tidak menghapus berkas yang baru tersimpan!
+        sessionUploadedPathsRef.current = [];
         setSessionUploadedPaths([]);
         router.push('/admin/books');
         router.refresh();
@@ -382,9 +452,15 @@ export function BookForm({ initialData, categories }: BookFormProps) {
       if (!confirmLeave) return;
     }
 
-    // Bersihkan file yang diunggah selama sesi ini jika ada
-    if (sessionUploadedPaths.length > 0) {
-      await cleanupUploadedFilesAction(sessionUploadedPaths);
+    const pathsToClean = [...sessionUploadedPathsRef.current];
+    // Kosongkan ref sebelum navigasi
+    sessionUploadedPathsRef.current = [];
+    setSessionUploadedPaths([]);
+
+    if (pathsToClean.length > 0) {
+      await cleanupUploadedFilesAction(pathsToClean).catch((err) => {
+        console.error('[handleCancel cleanup] Error:', err);
+      });
     }
 
     router.push('/admin/books');
@@ -465,9 +541,10 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                   {...register('title')}
                   placeholder="Contoh: Bumi Manusia"
                   aria-invalid={Boolean(errors.title)}
+                  aria-describedby={errors.title ? 'title-error' : undefined}
                 />
                 {errors.title && (
-                  <p className="text-xs text-destructive">{errors.title.message}</p>
+                  <p id="title-error" className="text-xs text-destructive">{errors.title.message}</p>
                 )}
               </div>
 
@@ -480,9 +557,10 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                   {...register('slug')}
                   placeholder="bumi-manusia"
                   aria-invalid={Boolean(errors.slug)}
+                  aria-describedby={errors.slug ? 'slug-error' : undefined}
                 />
                 {errors.slug && (
-                  <p className="text-xs text-destructive">{errors.slug.message}</p>
+                  <p id="slug-error" className="text-xs text-destructive">{errors.slug.message}</p>
                 )}
               </div>
 
@@ -499,7 +577,12 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                         value={field.value}
                         onValueChange={field.onChange}
                       >
-                        <SelectTrigger id="category_id" className="text-xs">
+                        <SelectTrigger
+                          id="category_id"
+                          className="text-xs"
+                          aria-invalid={Boolean(errors.category_id)}
+                          aria-describedby={errors.category_id ? 'category_id-error' : undefined}
+                        >
                           <SelectValue placeholder="Pilih Kategori" />
                         </SelectTrigger>
                         <SelectContent>
@@ -513,7 +596,7 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                     )}
                   />
                   {errors.category_id && (
-                    <p className="text-xs text-destructive">{errors.category_id.message}</p>
+                    <p id="category_id-error" className="text-xs text-destructive">{errors.category_id.message}</p>
                   )}
                 </div>
 
@@ -526,9 +609,10 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                     type="number"
                     {...register('publish_year', { valueAsNumber: true })}
                     aria-invalid={Boolean(errors.publish_year)}
+                    aria-describedby={errors.publish_year ? 'publish_year-error' : undefined}
                   />
                   {errors.publish_year && (
-                    <p className="text-xs text-destructive">{errors.publish_year.message}</p>
+                    <p id="publish_year-error" className="text-xs text-destructive">{errors.publish_year.message}</p>
                   )}
                 </div>
               </div>
@@ -543,9 +627,10 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                     {...register('author')}
                     placeholder="Nama penulis"
                     aria-invalid={Boolean(errors.author)}
+                    aria-describedby={errors.author ? 'author-error' : undefined}
                   />
                   {errors.author && (
-                    <p className="text-xs text-destructive">{errors.author.message}</p>
+                    <p id="author-error" className="text-xs text-destructive">{errors.author.message}</p>
                   )}
                 </div>
 
@@ -557,7 +642,12 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                     id="editor"
                     {...register('editor')}
                     placeholder="Nama editor"
+                    aria-invalid={Boolean(errors.editor)}
+                    aria-describedby={errors.editor ? 'editor-error' : undefined}
                   />
+                  {errors.editor && (
+                    <p id="editor-error" className="text-xs text-destructive">{errors.editor.message}</p>
+                  )}
                 </div>
 
                 <div className="space-y-1.5">
@@ -569,9 +659,10 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                     {...register('publisher')}
                     placeholder="Frasa Klausa Media"
                     aria-invalid={Boolean(errors.publisher)}
+                    aria-describedby={errors.publisher ? 'publisher-error' : undefined}
                   />
                   {errors.publisher && (
-                    <p className="text-xs text-destructive">{errors.publisher.message}</p>
+                    <p id="publisher-error" className="text-xs text-destructive">{errors.publisher.message}</p>
                   )}
                 </div>
               </div>
@@ -586,9 +677,10 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                     {...register('isbn')}
                     placeholder="978-602-0000-00-0"
                     aria-invalid={Boolean(errors.isbn)}
+                    aria-describedby={errors.isbn ? 'isbn-error' : undefined}
                   />
                   {errors.isbn && (
-                    <p className="text-xs text-destructive">{errors.isbn.message}</p>
+                    <p id="isbn-error" className="text-xs text-destructive">{errors.isbn.message}</p>
                   )}
                 </div>
 
@@ -601,9 +693,10 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                     type="number"
                     {...register('page_count', { valueAsNumber: true })}
                     aria-invalid={Boolean(errors.page_count)}
+                    aria-describedby={errors.page_count ? 'page_count-error' : undefined}
                   />
                   {errors.page_count && (
-                    <p className="text-xs text-destructive">{errors.page_count.message}</p>
+                    <p id="page_count-error" className="text-xs text-destructive">{errors.page_count.message}</p>
                   )}
                 </div>
               </div>
@@ -613,8 +706,12 @@ export function BookForm({ initialData, categories }: BookFormProps) {
           {/* Sinopsis & Deskripsi Tiptap */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base font-semibold">Sinopsis / Deskripsi Buku</CardTitle>
-              <CardDescription className="text-xs">
+              <CardTitle className="text-base font-semibold">
+                <Label htmlFor="description" className="text-base font-semibold">
+                  Sinopsis / Deskripsi Buku
+                </Label>
+              </CardTitle>
+              <CardDescription id="description-hint" className="text-xs">
                 Gunakan editor teks kaya untuk menyusun sinopsis buku dengan heading, kutipan, dan pemformatan semantik.
               </CardDescription>
             </CardHeader>
@@ -623,15 +720,21 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                 control={control}
                 name="description"
                 render={({ field }) => (
-                  <LazyTiptapEditor
-                    value={field.value || ''}
-                    onChange={field.onChange}
-                    disabled={isPending}
-                  />
+                  <div
+                    id="description"
+                    aria-invalid={Boolean(errors.description)}
+                    aria-describedby={errors.description ? 'description-error' : 'description-hint'}
+                  >
+                    <LazyTiptapEditor
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      disabled={isPending}
+                    />
+                  </div>
                 )}
               />
               {errors.description && (
-                <p className="text-xs text-destructive mt-1.5">{errors.description.message}</p>
+                <p id="description-error" className="text-xs text-destructive mt-1.5">{errors.description.message}</p>
               )}
             </CardContent>
           </Card>
@@ -704,9 +807,11 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                           {...register(`gallery.${idx}.alt_text` as const)}
                           placeholder="Deskripsi foto buku..."
                           className="h-8 text-xs"
+                          aria-invalid={Boolean(errors.gallery?.[idx]?.alt_text)}
+                          aria-describedby={errors.gallery?.[idx]?.alt_text ? `gallery-alt-${idx}-error` : undefined}
                         />
                         {errors.gallery?.[idx]?.alt_text && (
-                          <p className="text-[10px] text-destructive">
+                          <p id={`gallery-alt-${idx}-error`} className="text-[10px] text-destructive">
                             {errors.gallery[idx]?.alt_text?.message}
                           </p>
                         )}
@@ -865,7 +970,7 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => setValue('cover_url', null, { shouldDirty: true })}
+                    onClick={handleRemoveCover}
                     className="text-destructive hover:text-destructive h-8 px-2 text-xs"
                   >
                     Hapus
@@ -873,7 +978,7 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                 )}
               </div>
               {errors.cover_url && (
-                <p className="text-xs text-destructive text-center">{errors.cover_url.message}</p>
+                <p id="cover_url-error" className="text-xs text-destructive text-center">{errors.cover_url.message}</p>
               )}
             </CardContent>
           </Card>
@@ -897,9 +1002,10 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                   {...register('price_regular', { valueAsNumber: true })}
                   placeholder="85000"
                   aria-invalid={Boolean(errors.price_regular)}
+                  aria-describedby={errors.price_regular ? 'price_regular-error' : undefined}
                 />
                 {errors.price_regular && (
-                  <p className="text-xs text-destructive">{errors.price_regular.message}</p>
+                  <p id="price_regular-error" className="text-xs text-destructive">{errors.price_regular.message}</p>
                 )}
               </div>
 
@@ -915,9 +1021,10 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                   })}
                   placeholder="Kosongkan jika tanpa promo"
                   aria-invalid={Boolean(errors.price_promo)}
+                  aria-describedby={errors.price_promo ? 'price_promo-error' : undefined}
                 />
                 {errors.price_promo && (
-                  <p className="text-xs text-destructive">{errors.price_promo.message}</p>
+                  <p id="price_promo-error" className="text-xs text-destructive">{errors.price_promo.message}</p>
                 )}
               </div>
             </CardContent>
@@ -940,10 +1047,15 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                   id="whatsapp_number"
                   {...register('whatsapp_number')}
                   placeholder="081380604256"
+                  aria-invalid={Boolean(errors.whatsapp_number)}
+                  aria-describedby={errors.whatsapp_number ? 'whatsapp_number-error' : 'whatsapp_number-hint'}
                 />
-                <p className="text-[11px] text-muted-foreground">
+                <p id="whatsapp_number-hint" className="text-[11px] text-muted-foreground">
                   Otomatis dinormalisasi ke format internasional (628...).
                 </p>
+                {errors.whatsapp_number && (
+                  <p id="whatsapp_number-error" className="text-xs text-destructive">{errors.whatsapp_number.message}</p>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -956,10 +1068,15 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                   {...register('whatsapp_message_template')}
                   placeholder="Halo, saya ingin memesan buku {judul} seharga {harga}..."
                   className="text-xs"
+                  aria-invalid={Boolean(errors.whatsapp_message_template)}
+                  aria-describedby={errors.whatsapp_message_template ? 'whatsapp_message_template-error' : 'whatsapp_message_template-hint'}
                 />
-                <p className="text-[10px] text-muted-foreground">
+                <p id="whatsapp_message_template-hint" className="text-[10px] text-muted-foreground">
                   Gunakan placeholder <code>{'{judul}'}</code> dan <code>{'{harga}'}</code>.
                 </p>
+                {errors.whatsapp_message_template && (
+                  <p id="whatsapp_message_template-error" className="text-xs text-destructive">{errors.whatsapp_message_template.message}</p>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -971,9 +1088,10 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                   {...register('shopee_url')}
                   placeholder="https://shopee.co.id/frasaklausa/..."
                   aria-invalid={Boolean(errors.shopee_url)}
+                  aria-describedby={errors.shopee_url ? 'shopee_url-error' : undefined}
                 />
                 {errors.shopee_url && (
-                  <p className="text-xs text-destructive">{errors.shopee_url.message}</p>
+                  <p id="shopee_url-error" className="text-xs text-destructive">{errors.shopee_url.message}</p>
                 )}
               </div>
 
@@ -986,9 +1104,10 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                   {...register('tokopedia_url')}
                   placeholder="https://tokopedia.com/frasaklausa/..."
                   aria-invalid={Boolean(errors.tokopedia_url)}
+                  aria-describedby={errors.tokopedia_url ? 'tokopedia_url-error' : undefined}
                 />
                 {errors.tokopedia_url && (
-                  <p className="text-xs text-destructive">{errors.tokopedia_url.message}</p>
+                  <p id="tokopedia_url-error" className="text-xs text-destructive">{errors.tokopedia_url.message}</p>
                 )}
               </div>
             </CardContent>
@@ -1063,7 +1182,7 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                   <Label htmlFor="is_published" className="text-xs font-semibold">
                     Publikasikan ke Website
                   </Label>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p id="is_published-hint" className="text-[11px] text-muted-foreground">
                     Buku akan tampil di katalog publik Frasa Klausa Media.
                   </p>
                 </div>
@@ -1075,6 +1194,7 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                       id="is_published"
                       checked={field.value}
                       onCheckedChange={field.onChange}
+                      aria-describedby="is_published-hint"
                     />
                   )}
                 />
@@ -1085,7 +1205,7 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                   <Label htmlFor="is_featured" className="text-xs font-semibold">
                     Buku Pilihan / Unggulan
                   </Label>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p id="is_featured-hint" className="text-[11px] text-muted-foreground">
                     Sorot buku di carousel beranda utama.
                   </p>
                 </div>
@@ -1097,6 +1217,7 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                       id="is_featured"
                       checked={field.value}
                       onCheckedChange={field.onChange}
+                      aria-describedby="is_featured-hint"
                     />
                   )}
                 />
@@ -1120,6 +1241,8 @@ export function BookForm({ initialData, categories }: BookFormProps) {
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
+                id="related-search-input"
+                aria-label="Cari buku terkait berdasarkan judul atau penulis"
                 placeholder="Ketik judul atau penulis..."
                 value={relatedSearchQuery}
                 onChange={(e) => setRelatedSearchQuery(e.target.value)}

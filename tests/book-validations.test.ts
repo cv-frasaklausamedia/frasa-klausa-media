@@ -11,6 +11,7 @@ import {
   isValidShopeeUrl,
   isValidTokopediaUrl,
   extractBooksStoragePath,
+  validateCleanupPaths,
   bookFormSchema,
   bookQuerySchema,
   DEFAULT_WA_NUMBER,
@@ -356,6 +357,125 @@ describe('Book Validations Suite (Fase 1)', () => {
 
       const result = bookFormSchema.safeParse(invalidData);
       assert.equal(result.success, false);
+    });
+
+    it('menolak cover_url eksternal (https://evil.com/x.png)', () => {
+      const invalidData = {
+        ...validBaseData,
+        cover_url: 'https://evil.com/x.png',
+      };
+      const result = bookFormSchema.safeParse(invalidData);
+      assert.equal(result.success, false);
+    });
+
+    it('menolak gallery image_url dari bucket lain (misal: avatars)', () => {
+      const invalidData = {
+        ...validBaseData,
+        gallery: [
+          {
+            image_url:
+              'https://aieziawkiguwyupgeoei.supabase.co/storage/v1/object/public/avatars/covers/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.jpg',
+            alt_text: 'Foto Profil',
+            sort_order: 0,
+          },
+        ],
+      };
+      const result = bookFormSchema.safeParse(invalidData);
+      assert.equal(result.success, false);
+    });
+
+    it('menerima cover_url kosong atau null', () => {
+      const nullCoverData = {
+        ...validBaseData,
+        cover_url: null,
+      };
+      const emptyCoverData = {
+        ...validBaseData,
+        cover_url: '',
+      };
+      assert.equal(bookFormSchema.safeParse(nullCoverData).success, true);
+      assert.equal(bookFormSchema.safeParse(emptyCoverData).success, true);
+      assert.equal(bookFormSchema.parse(emptyCoverData).cover_url, null);
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // 6. UJI VALIDASI CLEANUP STORAGE PATHS (MURNI & DEFENSIF)
+  // --------------------------------------------------------------------------
+  describe('validateCleanupPaths Pure Validation', () => {
+    it('menolak input yang bukan array (null, undefined, string, object)', () => {
+      assert.equal(validateCleanupPaths(null), null);
+      assert.equal(validateCleanupPaths(undefined), null);
+      assert.equal(validateCleanupPaths('covers/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.jpg'), null);
+      assert.equal(validateCleanupPaths({ path: 'covers/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.jpg' }), null);
+    });
+
+    it('menolak jika panjang array melebihi 20 path (misal: 21 path)', () => {
+      const paths21 = Array.from(
+        { length: 21 },
+        (_, i) => `covers/00000000-0000-0000-0000-${String(i).padStart(12, '0')}.jpg`
+      );
+      assert.equal(validateCleanupPaths(paths21), null);
+    });
+
+    it('memfilter dan menolak path dengan teknik path traversal (.. atau %2e)', () => {
+      const input = [
+        'covers/../secret.jpg',
+        'covers/%2e%2e/secret.jpg',
+        'covers/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.jpg',
+      ];
+      const result = validateCleanupPaths(input);
+      assert.ok(result);
+      assert.equal(result.length, 1);
+      assert.equal(result[0], 'covers/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.jpg');
+    });
+
+    it('memfilter dan menolak nama berkas yang bukan UUID', () => {
+      const input = [
+        'covers/novel-cover.jpg',
+        'gallery/gambar-123.png',
+        'covers/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.jpg',
+      ];
+      const result = validateCleanupPaths(input);
+      assert.ok(result);
+      assert.equal(result.length, 1);
+      assert.equal(result[0], 'covers/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.jpg');
+    });
+
+    it('memfilter dan menolak ekstensi yang tidak diizinkan (.svg, .exe, .gif, .html)', () => {
+      const input = [
+        'covers/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.svg',
+        'covers/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.exe',
+        'covers/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.jpg',
+      ];
+      const result = validateCleanupPaths(input);
+      assert.ok(result);
+      assert.equal(result.length, 1);
+      assert.equal(result[0], 'covers/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.jpg');
+    });
+
+    it('memfilter dan menolak path dengan prefix di luar bucket books (misal: avatars/ atau blog/)', () => {
+      const input = [
+        'avatars/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.jpg',
+        'blog/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.png',
+        'gallery/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.webp',
+      ];
+      const result = validateCleanupPaths(input);
+      assert.ok(result);
+      assert.equal(result.length, 1);
+      assert.equal(result[0], 'gallery/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.webp');
+    });
+
+    it('menerima dan meloloskan path sah yang memenuhi semua kriteria', () => {
+      const validPaths = [
+        'covers/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.jpg',
+        'gallery/00000000-0000-4000-8000-000000000001.png',
+        'gallery/11111111-2222-4333-9444-555555555555.webp',
+      ];
+      const result = validateCleanupPaths(validPaths);
+      assert.ok(result);
+      assert.equal(result.length, 3);
+      assert.deepEqual(result, validPaths);
     });
   });
 

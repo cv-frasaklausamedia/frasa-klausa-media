@@ -30,7 +30,8 @@ import {
 } from '@/lib/books/data-access';
 import {
   type BookFormInput,
-  BOOKS_STORAGE_PATH_REGEX,
+  type BookFormValues,
+  validateCleanupPaths,
 } from '@/validations/book';
 
 /**
@@ -142,39 +143,25 @@ export async function cleanupUploadedFilesAction(
   try {
     await requireAdmin();
 
-    if (!paths || !Array.isArray(paths)) {
-      return actionError('Input paths harus berupa array.', 'VALIDATION_ERROR', 400);
-    }
-
-    if (paths.length === 0) {
-      return actionSuccess({ cleaned: 0 });
-    }
-
-    if (paths.length > 20) {
+    const validatedPaths = validateCleanupPaths(paths);
+    if (validatedPaths === null) {
+      if (!paths || !Array.isArray(paths)) {
+        return actionError('Input paths harus berupa array.', 'VALIDATION_ERROR', 400);
+      }
       return actionError('Maksimal 20 path yang dapat dibersihkan dalam satu panggilan.', 'BAD_REQUEST', 400);
+    }
+
+    if (validatedPaths.length === 0) {
+      return actionSuccess({ cleaned: 0 });
     }
 
     const supabase = await createClient();
 
-    // Validasi ketat seketat extractBooksStoragePath menggunakan regex BOOKS_STORAGE_PATH_REGEX
-    const safePaths: string[] = [];
-    for (const p of paths) {
-      if (typeof p !== 'string') continue;
-      const cleanPath = p.trim().replace(/^\/+/, '');
-      if (
-        !cleanPath.includes('..') &&
-        !cleanPath.includes('%2e') &&
-        BOOKS_STORAGE_PATH_REGEX.test(cleanPath)
-      ) {
-        safePaths.push(cleanPath);
-      }
-    }
-
-    if (safePaths.length > 0) {
+    if (validatedPaths.length > 0) {
       // Pastikan path yang ingin dihapus TIDAK sedang dipakai buku aktif di database
       // Menggunakan kesamaan persis URL publik
       const verifiedPathsToDelete: string[] = [];
-      for (const p of safePaths) {
+      for (const p of validatedPaths) {
         const inUse = await checkIfStoragePathInUse(p);
         if (!inUse) {
           verifiedPathsToDelete.push(p);
@@ -198,13 +185,12 @@ export async function cleanupUploadedFilesAction(
  * Server Action: Membuat Buku Baru
  */
 export async function createBookAction(
-  rawInput: BookFormInput,
-  newlyUploadedPaths: string[] = []
+  rawInput: BookFormInput | BookFormValues
 ): Promise<ActionResponse<{ id: string }>> {
   try {
     await requireAdmin();
     const deps = await getRealServiceDeps();
-    return await executeCreateBook(rawInput, deps, newlyUploadedPaths);
+    return await executeCreateBook(rawInput, deps);
   } catch (error) {
     return handleActionError(error);
   }
@@ -215,13 +201,12 @@ export async function createBookAction(
  */
 export async function updateBookAction(
   id: string,
-  rawInput: BookFormInput,
-  newlyUploadedPaths: string[] = []
+  rawInput: BookFormInput | BookFormValues
 ): Promise<ActionResponse<{ id: string }>> {
   try {
     await requireAdmin();
     const deps = await getRealServiceDeps();
-    return await executeUpdateBook(id, rawInput, deps, newlyUploadedPaths);
+    return await executeUpdateBook(id, rawInput, deps);
   } catch (error) {
     return handleActionError(error);
   }

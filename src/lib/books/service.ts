@@ -7,7 +7,6 @@ import {
   type BookFormInput,
   type BookFormValues,
 } from '../../validations/book.ts';
-import { sanitizeBookHtml } from '../sanitizer.ts';
 import {
   actionSuccess,
   actionError,
@@ -139,8 +138,7 @@ export function parseRpcMutationResult(raw: unknown): BookMutationResult {
  */
 export async function executeCreateBook(
   rawInput: BookFormInput,
-  deps: BookServiceDeps,
-  newlyUploadedPaths: string[] = []
+  deps: BookServiceDeps
 ): Promise<ActionResponse<{ id: string }>> {
   try {
     // 1. Verifikasi otorisasi Admin di server
@@ -150,13 +148,12 @@ export async function executeCreateBook(
     const validated = bookFormSchema.parse(rawInput);
 
     // 3. Sanitasi deskripsi HTML
+    const { sanitizeBookHtml } = await import('../sanitizer.ts');
     validated.description = sanitizeBookHtml(validated.description);
 
     // 4. Cek keunikan slug (409 Conflict)
     const isConflict = await deps.db.checkSlugConflict(validated.slug);
     if (isConflict) {
-      // Rollback berkas baru di storage jika dibatalkan karena konflik
-      await rollbackStorageFiles(newlyUploadedPaths, deps);
       return actionError(
         'Slug sudah digunakan oleh buku lain. Silakan gunakan slug yang berbeda.',
         'CONFLICT',
@@ -173,8 +170,6 @@ export async function executeCreateBook(
 
     return actionSuccess({ id: mutationResult.book_id });
   } catch (error) {
-    // Pastikan jika ada error tak terduga atau kegagalan DB, file baru tetap dibersihkan
-    await rollbackStorageFiles(newlyUploadedPaths, deps);
     throw error;
   }
 }
@@ -185,8 +180,7 @@ export async function executeCreateBook(
 export async function executeUpdateBook(
   id: string,
   rawInput: BookFormInput,
-  deps: BookServiceDeps,
-  newlyUploadedPaths: string[] = []
+  deps: BookServiceDeps
 ): Promise<ActionResponse<{ id: string }>> {
   try {
     // 1. Verifikasi otorisasi Admin di server
@@ -200,12 +194,12 @@ export async function executeUpdateBook(
     const validated = bookFormSchema.parse(rawInput);
 
     // 3. Sanitasi deskripsi HTML
+    const { sanitizeBookHtml } = await import('../sanitizer.ts');
     validated.description = sanitizeBookHtml(validated.description);
 
     // 4. Cek keunikan slug selain dirinya sendiri
     const isConflict = await deps.db.checkSlugConflict(validated.slug, id);
     if (isConflict) {
-      await rollbackStorageFiles(newlyUploadedPaths, deps);
       return actionError(
         'Slug sudah digunakan oleh buku lain. Silakan gunakan slug yang berbeda.',
         'CONFLICT',
@@ -227,7 +221,6 @@ export async function executeUpdateBook(
 
     return actionSuccess({ id: mutationResult.book_id });
   } catch (error) {
-    await rollbackStorageFiles(newlyUploadedPaths, deps);
     throw error;
   }
 }
@@ -355,27 +348,8 @@ export async function executeUploadBookImage(
 }
 
 // ============================================================================
-// 4. UTILITAS INTERNAL PEMBERSIHAN & ROLLBACK
+// 4. UTILITAS INTERNAL PEMBERSIHAN GAMBAR LAMA
 // ============================================================================
-
-/**
- * Membersihkan daftar berkas yang baru diunggah jika transaksi dibatalkan atau gagal
- */
-async function rollbackStorageFiles(paths: string[], deps: BookServiceDeps): Promise<void> {
-  if (!paths || paths.length === 0) return;
-
-  const validPaths = paths
-    .map((p) => p.trim())
-    .filter((p) => p.startsWith('covers/') || p.startsWith('gallery/'));
-
-  if (validPaths.length === 0) return;
-
-  try {
-    await deps.storage.remove(validPaths);
-  } catch (err) {
-    deps.logger?.error('[rollbackStorageFiles] Gagal rollback file storage:', err);
-  }
-}
 
 /**
  * Membersihkan URL gambar lama dengan aman:

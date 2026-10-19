@@ -22,6 +22,7 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface TiptapEditorProps {
   value: string;
@@ -92,7 +93,7 @@ export function TiptapEditor({
 
     // Hanya izinkan skema aman
     if (!/^https?:\/\//i.test(url) && !/^mailto:/i.test(url)) {
-      alert('Tautan hanya boleh diawali dengan https:// atau mailto:');
+      toast.error('Tautan hanya boleh diawali dengan https:// atau mailto:');
       return;
     }
 

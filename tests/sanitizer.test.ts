@@ -25,15 +25,17 @@ describe('Sanitizer Suite (Fase 1 - XSS Prevention PRD §15.5)', () => {
     const dirty = '<a href="javascript:alert(\'hack\')">Klik di sini</a>';
     const clean = sanitizeBookHtml(dirty);
     assert.ok(!clean.includes('javascript:'), 'Output tidak boleh memuat skema javascript:');
+    assert.ok(!clean.includes('href'), 'Atribut href berbahaya harus dibuang');
     assert.ok(clean.includes('Klik di sini'));
   });
 
-  it('membersihkan tag iframe, style, dan embed', () => {
+  it('membersihkan tag iframe, style, dan embed beserta isinya', () => {
     const dirty =
       '<style>body { display: none; }</style><iframe src="https://attacker.com"></iframe><p>Konten</p>';
     const clean = sanitizeBookHtml(dirty);
     assert.ok(!clean.includes('<iframe'), 'Tag iframe harus dibuang');
     assert.ok(!clean.includes('<style'), 'Tag style harus dibuang');
+    assert.ok(!clean.includes('display: none'), 'Konten style harus dibuang');
     assert.ok(clean.includes('<p>Konten</p>'));
   });
 
@@ -74,6 +76,15 @@ describe('Sanitizer Suite (Fase 1 - XSS Prevention PRD §15.5)', () => {
     const dirty = '<a href="https://example.com" target="_parent">Tautan</a>';
     const clean = sanitizeBookHtml(dirty);
     assert.ok(!clean.includes('target="_parent"'), 'Target selain _blank harus dibuang');
+    assert.ok(!clean.includes('target='), 'Target non-_blank harus dibuang sepenuhnya');
+    assert.ok(clean.includes('rel="noopener noreferrer"'));
+  });
+
+  it('menolak dan membuang target="_self" pada tag <a>', () => {
+    const dirty = '<a href="https://example.com" target="_self">Tautan</a>';
+    const clean = sanitizeBookHtml(dirty);
+    assert.ok(!clean.includes('target="_self"'), 'Target _self harus dibuang');
+    assert.ok(!clean.includes('target='), 'Atribut target harus dibuang sepenuhnya');
     assert.ok(clean.includes('rel="noopener noreferrer"'));
   });
 
@@ -86,10 +97,27 @@ describe('Sanitizer Suite (Fase 1 - XSS Prevention PRD §15.5)', () => {
     assert.equal(clean, '<p>Buku</p>');
   });
 
+  it('menetralisasi <a href="data:text/html,...">', () => {
+    const dirty = '<a href="data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==">Data link</a>';
+    const clean = sanitizeBookHtml(dirty);
+    assert.ok(!clean.includes('data:text/html'), 'Skema data: harus dinetralisasi / dibuang');
+    assert.ok(!clean.includes('href='), 'Atribut href data: harus dibuang');
+    assert.ok(clean.includes('Data link'));
+  });
+
+  it('membuang <svg onload=...>', () => {
+    const dirty = '<p>Sebelum</p><svg onload="alert(1)"><circle r="10"/></svg><p>Sesudah</p>';
+    const clean = sanitizeBookHtml(dirty);
+    assert.ok(!clean.includes('<svg'), 'Tag <svg> harus dibuang');
+    assert.ok(!clean.includes('onload'), 'Atribut onload harus dibuang');
+    assert.ok(!clean.includes('alert(1)'), 'Payload alert harus dibuang');
+    assert.ok(clean.includes('<p>Sebelum</p>'));
+    assert.ok(clean.includes('<p>Sesudah</p>'));
+  });
+
   it('menangani input null, undefined, dan string kosong secara elegan', () => {
     assert.equal(sanitizeBookHtml(''), '');
     assert.equal(sanitizeBookHtml(null), '');
     assert.equal(sanitizeBookHtml(undefined), '');
   });
 });
-

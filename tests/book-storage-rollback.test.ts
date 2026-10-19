@@ -152,7 +152,7 @@ describe('Book Storage & Rollback Suite (Fase 2 - PRD §14.5 & §15.8)', () => {
       related_book_ids: [],
     };
 
-    it('menghapus file baru dari Storage jika transaksi database gagal saat create', async () => {
+    it('server TIDAK menghapus file yang diunggah saat RPC gagal; file tetap milik form dan simpan ulang sukses', async () => {
       const removedFiles: string[] = [];
 
       const mockStorage: BookStorageAdapter = {
@@ -163,10 +163,15 @@ describe('Book Storage & Rollback Suite (Fase 2 - PRD §14.5 & §15.8)', () => {
         getPublicUrl: (path) => path,
       };
 
+      let attemptCount = 0;
       const mockDb: BookDbAdapter = {
         checkSlugConflict: async () => false,
         upsertAtomic: async () => {
-          throw new Error('Database connection failed / unique constraint violation');
+          attemptCount++;
+          if (attemptCount === 1) {
+            throw new Error('Database temporary connection failure');
+          }
+          return { book_id: 'book-retry-success', unused_image_urls: [] };
         },
         getBookById: async () => null,
         deleteBook: async () => ({ id: '', coverUrl: null, galleryUrls: [] }),
@@ -188,18 +193,89 @@ describe('Book Storage & Rollback Suite (Fase 2 - PRD §14.5 & §15.8)', () => {
         revalidate: () => {},
       };
 
-      const newUploads = ['covers/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.jpg'];
-
+      // Percobaan 1: RPC Gagal
       await assert.rejects(
         async () => {
-          await executeCreateBook(validFormInput, deps, newUploads);
+          await executeCreateBook(validFormInput, deps);
         },
-        /Database connection failed/
+        /Database temporary connection failure/
       );
 
-      // Verifikasi berkas di storage telah dibersihkan (anti file yatim PRD §14.5)
-      assert.equal(removedFiles.length, 1);
-      assert.equal(removedFiles[0], 'covers/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.jpg');
+      // Verifikasi: Server TIDAK menghapus file baru di Storage saat error
+      assert.equal(removedFiles.length, 0, 'Server tidak boleh menghapus file yang masih dipegang form');
+
+      // Percobaan 2 (Retry): Simpan ulang dengan URL yang sama sukses
+      const retryRes = await executeCreateBook(validFormInput, deps);
+      assert.equal(retryRes.ok, true);
+      if (retryRes.ok) {
+        assert.equal(retryRes.data.id, 'book-retry-success');
+      }
+      assert.equal(removedFiles.length, 0, 'File tetap tersimpan dan tidak dihapus saat simpan sukses');
+    });
+
+    it('server TIDAK menghapus file baru saat RPC gagal pada update; simpan ulang dengan URL yang sama sukses', async () => {
+      const removedFiles: string[] = [];
+
+      const mockStorage: BookStorageAdapter = {
+        upload: async () => ({ publicUrl: '' }),
+        remove: async (paths) => {
+          removedFiles.push(...paths);
+        },
+        getPublicUrl: (path) => path,
+      };
+
+      let updateAttemptCount = 0;
+      const mockDb: BookDbAdapter = {
+        checkSlugConflict: async () => false,
+        upsertAtomic: async () => {
+          updateAttemptCount++;
+          if (updateAttemptCount === 1) {
+            throw new Error('Database temporary connection failure during update');
+          }
+          return { book_id: 'book-update-retry-success', unused_image_urls: [] };
+        },
+        getBookById: async () => null,
+        deleteBook: async () => ({ id: '', coverUrl: null, galleryUrls: [] }),
+        toggleField: async () => {},
+        isStoragePathInUse: async () => false,
+      };
+
+      const deps: BookServiceDeps = {
+        auth: {
+          requireAdmin: async () => ({
+            id: 'admin-1',
+            email: 'admin@frasa.com',
+            role: 'admin',
+            isActive: true,
+          }),
+        },
+        db: mockDb,
+        storage: mockStorage,
+        revalidate: () => {},
+      };
+
+      // Percobaan 1: RPC Gagal saat update
+      await assert.rejects(
+        async () => {
+          await executeUpdateBook('book-123', validFormInput, deps);
+        },
+        /Database temporary connection failure during update/
+      );
+
+      // Verifikasi: Server TIDAK memanggil storage remove saat error pada update
+      assert.equal(
+        removedFiles.length,
+        0,
+        'Server tidak boleh menghapus file yang masih dipegang form saat update gagal'
+      );
+
+      // Percobaan 2 (Retry): Simpan ulang dengan URL yang sama sukses
+      const retryRes = await executeUpdateBook('book-123', validFormInput, deps);
+      assert.equal(retryRes.ok, true);
+      if (retryRes.ok) {
+        assert.equal(retryRes.data.id, 'book-update-retry-success');
+      }
+      assert.equal(removedFiles.length, 0, 'File baru tetap tersimpan dan tidak dihapus saat simpan sukses');
     });
 
     it('menghapus file lama yang tidak terpakai HANYA SETELAH RPC sukses pada update', async () => {
@@ -241,7 +317,7 @@ describe('Book Storage & Rollback Suite (Fase 2 - PRD §14.5 & §15.8)', () => {
         revalidate: () => {},
       };
 
-      const res = await executeUpdateBook('book-123', validFormInput, deps, []);
+      const res = await executeUpdateBook('book-123', validFormInput, deps);
       assert.equal(res.ok, true);
       if (res.ok) {
         assert.equal(res.data.id, 'book-123');
@@ -296,7 +372,7 @@ describe('Book Storage & Rollback Suite (Fase 2 - PRD §14.5 & §15.8)', () => {
       };
 
       // Action tidak boleh crash meskipun storage remove error
-      const res = await executeUpdateBook('book-123', validFormInput, deps, []);
+      const res = await executeUpdateBook('book-123', validFormInput, deps);
       assert.equal(res.ok, true);
       assert.equal(loggedErrors.length, 1);
     });
@@ -341,10 +417,134 @@ describe('Book Storage & Rollback Suite (Fase 2 - PRD §14.5 & §15.8)', () => {
         revalidate: () => {},
       };
 
-      const res = await executeUpdateBook('book-123', validFormInput, deps, []);
+      const res = await executeUpdateBook('book-123', validFormInput, deps);
       assert.equal(res.ok, true);
       // removedFiles harus KOSONG karena isStoragePathInUse = true
       assert.equal(removedFiles.length, 0, 'File yang masih dipakai buku lain tidak boleh dihapus');
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // 5. UJI SANITASI DESKRIPSI SEBELUM RPC (PRD §15.5 & Item 6)
+  // --------------------------------------------------------------------------
+  describe('Sanitasi Deskripsi Sebelum RPC (executeCreateBook & executeUpdateBook)', () => {
+    const validFormInput: BookFormInput = {
+      title: 'Buku Uji Sanitasi',
+      slug: 'buku-uji-sanitasi',
+      category_id: 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d',
+      author: 'Penulis Uji',
+      publisher: 'Frasa Klausa Media',
+      publish_year: 2024,
+      page_count: 100,
+      price_regular: 50000,
+      cover_url:
+        'https://aieziawkiguwyupgeoei.supabase.co/storage/v1/object/public/books/covers/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d.jpg',
+      gallery: [],
+      related_book_ids: [],
+    };
+
+    it('executeCreateBook membersihkan deskripsi HTML berbahaya sebelum memanggil RPC', async () => {
+      let rpcPayloadPassed: Record<string, unknown> | null = null;
+
+      const mockDb: BookDbAdapter = {
+        checkSlugConflict: async () => false,
+        upsertAtomic: async (_id, data) => {
+          rpcPayloadPassed = data as unknown as Record<string, unknown>;
+          return { book_id: 'book-sanitized-create', unused_image_urls: [] };
+        },
+        getBookById: async () => null,
+        deleteBook: async () => ({ id: '', coverUrl: null, galleryUrls: [] }),
+        toggleField: async () => {},
+        isStoragePathInUse: async () => false,
+      };
+
+      const deps: BookServiceDeps = {
+        auth: {
+          requireAdmin: async () => ({
+            id: 'admin-1',
+            email: 'admin@frasa.com',
+            role: 'admin',
+            isActive: true,
+          }),
+        },
+        db: mockDb,
+        storage: {
+          upload: async () => ({ publicUrl: '' }),
+          remove: async () => {},
+          getPublicUrl: (path) => path,
+        },
+        revalidate: () => {},
+      };
+
+      const inputWithXss: BookFormInput = {
+        ...validFormInput,
+        title: 'Buku XSS Create',
+        slug: 'buku-xss-create',
+        description: '<p>Sinopsis Buku</p><script>alert(1)</script><img src="x" onerror="alert(2)"><a href="javascript:void(0)">Klik</a>',
+      };
+
+      const res = await executeCreateBook(inputWithXss, deps);
+      assert.equal(res.ok, true);
+      assert.ok(rpcPayloadPassed !== null);
+      const sanitizedDesc = (rpcPayloadPassed as Record<string, unknown>).description as string;
+
+      assert.ok(!sanitizedDesc.includes('<script>'), 'Script tag tidak boleh lolos ke RPC');
+      assert.ok(!sanitizedDesc.includes('alert(1)'), 'Payload script tidak boleh lolos ke RPC');
+      assert.ok(!sanitizedDesc.includes('onerror'), 'Event handler onerror tidak boleh lolos ke RPC');
+      assert.ok(!sanitizedDesc.includes('javascript:'), 'Javascript URI tidak boleh lolos ke RPC');
+      assert.ok(sanitizedDesc.includes('<p>Sinopsis Buku</p>'), 'Konten yang valid harus tetap dipertahankan');
+    });
+
+    it('executeUpdateBook membersihkan deskripsi HTML berbahaya sebelum memanggil RPC', async () => {
+      let rpcPayloadPassed: Record<string, unknown> | null = null;
+
+      const mockDb: BookDbAdapter = {
+        checkSlugConflict: async () => false,
+        upsertAtomic: async (id, data) => {
+          void id;
+          rpcPayloadPassed = data as unknown as Record<string, unknown>;
+          return { book_id: 'book-sanitized-update', unused_image_urls: [] };
+        },
+        getBookById: async () => null,
+        deleteBook: async () => ({ id: '', coverUrl: null, galleryUrls: [] }),
+        toggleField: async () => {},
+        isStoragePathInUse: async () => false,
+      };
+
+      const deps: BookServiceDeps = {
+        auth: {
+          requireAdmin: async () => ({
+            id: 'admin-1',
+            email: 'admin@frasa.com',
+            role: 'admin',
+            isActive: true,
+          }),
+        },
+        db: mockDb,
+        storage: {
+          upload: async () => ({ publicUrl: '' }),
+          remove: async () => {},
+          getPublicUrl: (path) => path,
+        },
+        revalidate: () => {},
+      };
+
+      const inputWithXss: BookFormInput = {
+        ...validFormInput,
+        title: 'Buku XSS Update',
+        slug: 'buku-xss-update',
+        description: '<h3>Bab 1</h3><script>alert("hacked")</script><p>Paragraf</p>',
+      };
+
+      const res = await executeUpdateBook('book-123', inputWithXss, deps);
+      assert.equal(res.ok, true);
+      assert.ok(rpcPayloadPassed !== null);
+      const sanitizedDesc = (rpcPayloadPassed as Record<string, unknown>).description as string;
+
+      assert.ok(!sanitizedDesc.includes('<script>'), 'Script tag tidak boleh lolos ke RPC');
+      assert.ok(!sanitizedDesc.includes('hacked'), 'Payload script tidak boleh lolos ke RPC');
+      assert.ok(sanitizedDesc.includes('<h3>Bab 1</h3>'));
+      assert.ok(sanitizedDesc.includes('<p>Paragraf</p>'));
     });
   });
 });

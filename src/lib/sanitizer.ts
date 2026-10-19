@@ -1,8 +1,9 @@
-import DOMPurify from 'isomorphic-dompurify';
+import sanitizeHtml from 'sanitize-html';
 
 /**
  * Daftar tag HTML yang diizinkan untuk konten teks kaya Tiptap (PRD §15.5).
  * Heading dibatasi pada level 2–4 agar konsisten dengan hierarki dokumen semantik.
+ * Sesuai PRD dan aturan keamanan, tag img, script, style, iframe TIDAK diizinkan.
  */
 export const ALLOWED_HTML_TAGS = [
   'h2',
@@ -19,7 +20,6 @@ export const ALLOWED_HTML_TAGS = [
   'i',
   'u',
   's',
-  'strike',
   'code',
   'pre',
   'br',
@@ -28,39 +28,46 @@ export const ALLOWED_HTML_TAGS = [
 ] as const;
 
 /**
- * Daftar atribut HTML yang diizinkan pada tag tertentu.
+ * Atribut HTML yang diizinkan: hanya a: href, target, rel.
  */
-export const ALLOWED_HTML_ATTRS = ['href', 'target', 'rel', 'class'] as const;
+export const ALLOWED_HTML_ATTRS = {
+  a: ['href', 'target', 'rel'],
+};
 
 /**
- * Protokol URI yang diizinkan pada atribut href/src.
+ * Protokol URI yang diizinkan pada atribut href (tanpa data: dan javascript:).
  */
 export const ALLOWED_URI_SCHEMES = ['http', 'https', 'mailto'] as const;
 
 /**
- * Konfigurasi sanitasi default menggunakan DOMPurify.
+ * Konfigurasi sanitasi default menggunakan sanitize-html (pure js, no jsdom).
  */
-const DOMPURIFY_CONFIG = {
-  ALLOWED_TAGS: [...ALLOWED_HTML_TAGS],
-  ALLOWED_ATTR: [...ALLOWED_HTML_ATTRS],
-  ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
-  ADD_ATTR: ['target', 'rel'],
-  FORCE_BODY: true,
+const SANITIZE_CONFIG: sanitizeHtml.IOptions = {
+  allowedTags: [...ALLOWED_HTML_TAGS],
+  allowedAttributes: ALLOWED_HTML_ATTRS,
+  allowedSchemes: [...ALLOWED_URI_SCHEMES],
+  allowedSchemesAppliedToAttributes: ['href'],
+  allowProtocolRelative: false,
+  nonTextTags: ['script', 'style', 'textarea', 'option', 'noscript', 'iframe'],
+  transformTags: {
+    a: (tagName, attribs) => {
+      const newAttribs = { ...attribs };
+
+      // Paksa rel="noopener noreferrer"
+      newAttribs.rel = 'noopener noreferrer';
+
+      // Target hanya boleh "_blank", selain itu dibuang
+      if (newAttribs.target && newAttribs.target !== '_blank') {
+        delete newAttribs.target;
+      }
+
+      return {
+        tagName,
+        attribs: newAttribs,
+      };
+    },
+  },
 };
-
-// Tambahkan hook DOMPurify untuk mengamankan seluruh tautan <a>
-DOMPurify.addHook('afterSanitizeAttributes', (node) => {
-  if (node.tagName === 'A') {
-    // 1. Batasi target hanya "_blank" jika ada
-    const target = node.getAttribute('target');
-    if (target && target !== '_blank') {
-      node.removeAttribute('target');
-    }
-
-    // 2. Wajib sertakan rel="noopener noreferrer" pada tautan
-    node.setAttribute('rel', 'noopener noreferrer');
-  }
-});
 
 /**
  * Sanitasi konten HTML sebelum disimpan ke database atau saat dirender ke DOM.
@@ -71,6 +78,6 @@ export function sanitizeBookHtml(dirtyHtml: string | null | undefined): string {
     return '';
   }
 
-  const clean = DOMPurify.sanitize(dirtyHtml, DOMPURIFY_CONFIG);
-  return typeof clean === 'string' ? clean.trim() : '';
+  const clean = sanitizeHtml(dirtyHtml, SANITIZE_CONFIG);
+  return clean.trim();
 }
