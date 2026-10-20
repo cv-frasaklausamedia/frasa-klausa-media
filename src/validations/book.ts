@@ -70,7 +70,7 @@ export function isValidIsbn(isbn: string | null | undefined): boolean {
 
 export const DEFAULT_WA_NUMBER = '6281380604256';
 export const DEFAULT_WA_TEMPLATE =
-  'Halo Frasa Klausa Media, saya ingin memesan buku "{judul}" seharga {harga}. Apakah stok masih tersedia?';
+  'Halo Frasa Klausa Media, saya ingin memesan buku "{judul}"\ndengan alamat url: {url} seharga {harga}. Apakah stok masih tersedia?';
 
 /**
  * Regex nomor telepon WhatsApp internasional format Indonesia:
@@ -112,21 +112,34 @@ export function formatRupiah(amount: number): string {
 }
 
 /**
- * Fungsi murni menyusun teks pesan pemesanan WhatsApp berdasarkan template, judul, dan harga.
- * Placeholder {judul} dan {harga} bersifat opsional dan diganti secara dinamis.
+ * Fungsi murni menyusun teks pesan pemesanan WhatsApp berdasarkan template, judul, harga, dan url halaman buku.
+ * Placeholder {judul}, {harga}, dan {url} bersifat opsional dan diganti secara dinamis.
  */
 export function formatWhatsAppMessage(
   template: string | null | undefined,
   title: string,
-  price: number
+  price: number,
+  url?: string | null
 ): string {
-  const activeTemplate =
+  let activeTemplate =
     template && template.trim().length > 0 ? template.trim() : DEFAULT_WA_TEMPLATE;
 
   const formattedPrice = formatRupiah(price);
+  const resolvedUrl = url?.trim() || '';
+
+  // Dukungan backward-compatibility: Jika URL diberikan namun template lama di DB belum memiliki placeholder {url}
+  if (resolvedUrl && !activeTemplate.includes('{url}') && !activeTemplate.includes(resolvedUrl)) {
+    if (activeTemplate.includes('seharga')) {
+      activeTemplate = activeTemplate.replace(/seharga/i, `\ndengan alamat url: {url} seharga`);
+    } else {
+      activeTemplate = `${activeTemplate}\ndengan alamat url: {url}`;
+    }
+  }
+
   return activeTemplate
     .replace(/\{judul\}/gi, title || '[Judul Buku]')
-    .replace(/\{harga\}/gi, formattedPrice);
+    .replace(/\{harga\}/gi, formattedPrice)
+    .replace(/\{url\}/gi, resolvedUrl);
 }
 
 /**
@@ -136,10 +149,11 @@ export function buildWhatsAppUrl(
   phone: string | null | undefined,
   template: string | null | undefined,
   title: string,
-  price: number
+  price: number,
+  url?: string | null
 ): string {
   const normalizedNumber = normalizeWhatsAppNumber(phone);
-  const message = formatWhatsAppMessage(template, title, price);
+  const message = formatWhatsAppMessage(template, title, price, url);
   return `https://wa.me/${normalizedNumber}?text=${encodeURIComponent(message)}`;
 }
 

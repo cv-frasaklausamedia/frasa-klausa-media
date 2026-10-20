@@ -170,6 +170,7 @@ export function BookForm({ initialData, categories }: BookFormProps) {
 
   // Nilai watch untuk Live Preview & Dynamic Slugs
   const watchedTitle = watch('title');
+  const watchedSlug = watch('slug');
   const watchedPriceRegular = watch('price_regular');
   const watchedPricePromo = watch('price_promo');
   const watchedCoverUrl = watch('cover_url');
@@ -471,11 +472,20 @@ export function BookForm({ initialData, categories }: BookFormProps) {
   const numPromo = watchedPricePromo !== null && watchedPricePromo !== undefined ? Number(watchedPricePromo) : null;
   const effectivePrice = numPromo !== null && numPromo < numRegular ? numPromo : numRegular;
 
+  const previewSlug = watchedSlug?.trim() || 'contoh-buku';
+  const cleanAppUrl = (
+    typeof window !== 'undefined'
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_APP_URL || 'https://www.frasaklausamedia.com'
+  ).replace(/\/+$/, '');
+  const previewBookUrl = `${cleanAppUrl}/buku/${previewSlug}`;
+
   const waResolvedUrl = buildWhatsAppUrl(
     watchedWaNumber,
     watchedWaTemplate,
     watchedTitle || 'Judul Buku',
-    effectivePrice
+    effectivePrice,
+    previewBookUrl
   );
 
   return (
@@ -1066,13 +1076,13 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                   id="whatsapp_message_template"
                   rows={3}
                   {...register('whatsapp_message_template')}
-                  placeholder="Halo, saya ingin memesan buku {judul} seharga {harga}..."
+                  placeholder={'Halo Frasa Klausa Media, saya ingin memesan buku "{judul}"\ndengan alamat url: {url} seharga {harga}. Apakah stok masih tersedia?'}
                   className="text-xs"
                   aria-invalid={Boolean(errors.whatsapp_message_template)}
                   aria-describedby={errors.whatsapp_message_template ? 'whatsapp_message_template-error' : 'whatsapp_message_template-hint'}
                 />
                 <p id="whatsapp_message_template-hint" className="text-[10px] text-muted-foreground">
-                  Gunakan placeholder <code>{'{judul}'}</code> dan <code>{'{harga}'}</code>.
+                  Gunakan placeholder <code>{'{judul}'}</code>, <code>{'{harga}'}</code>, dan <code>{'{url}'}</code>.
                 </p>
                 {errors.whatsapp_message_template && (
                   <p id="whatsapp_message_template-error" className="text-xs text-destructive">{errors.whatsapp_message_template.message}</p>

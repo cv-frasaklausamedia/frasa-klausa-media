@@ -91,24 +91,55 @@ describe('Book Validations Suite (Fase 1)', () => {
       assert.equal(normalizeWhatsAppNumber('12345'), DEFAULT_WA_NUMBER);
     });
 
-    it('formatWhatsAppMessage mengganti placeholder {judul} dan {harga} secara dinamis', () => {
-      const template = 'Pesan {judul} harga {harga}. Stok ada?';
-      const result = formatWhatsAppMessage(template, 'Laskar Pelangi', 85000);
+    it('formatWhatsAppMessage mengganti placeholder {judul}, {harga}, dan {url} secara dinamis', () => {
+      const template = 'Pesan {judul} URL: {url} harga {harga}. Stok ada?';
+      const result = formatWhatsAppMessage(
+        template,
+        'Laskar Pelangi',
+        85000,
+        'https://www.frasaklausamedia.com/buku/laskar-pelangi'
+      );
       assert.ok(result.includes('Laskar Pelangi'));
       assert.ok(result.includes('85.000'));
+      assert.ok(result.includes('https://www.frasaklausamedia.com/buku/laskar-pelangi'));
     });
 
-    it('formatWhatsAppMessage menggunakan default template jika template kosong', () => {
-      const result = formatWhatsAppMessage(null, 'Bumi Manusia', 110000);
+    it('formatWhatsAppMessage menggunakan default template jika template kosong dan menyertakan URL', () => {
+      const result = formatWhatsAppMessage(
+        null,
+        'Bumi Manusia',
+        110000,
+        'https://www.frasaklausamedia.com/buku/bumi-manusia'
+      );
       assert.ok(result.includes('Bumi Manusia'));
       assert.ok(result.includes('110.000'));
       assert.ok(result.includes('Halo Frasa Klausa Media'));
+      assert.ok(result.includes('dengan alamat url: https://www.frasaklausamedia.com/buku/bumi-manusia'));
     });
 
-    it('buildWhatsAppUrl menghasilkan URL wa.me dengan encoding yang aman', () => {
-      const url = buildWhatsAppUrl('081380604256', null, 'Filosofi Teras', 98000);
+    it('formatWhatsAppMessage backward-compatibility otomatis menyisipkan URL jika template lama tidak memiliki {url}', () => {
+      const legacyTemplate = 'Halo Frasa Klausa Media, saya ingin memesan buku "{judul}" seharga {harga}. Apakah stok masih tersedia?';
+      const result = formatWhatsAppMessage(
+        legacyTemplate,
+        'Jejak Sunyi di Sudut Kota',
+        75000,
+        'https://www.frasaklausamedia.com/buku/jejak-sunyi-di-sudut-kota'
+      );
+      assert.ok(result.includes('dengan alamat url: https://www.frasaklausamedia.com/buku/jejak-sunyi-di-sudut-kota'));
+      assert.ok(result.includes('seharga Rp'));
+    });
+
+    it('buildWhatsAppUrl menghasilkan URL wa.me dengan encoding yang aman menyertakan URL buku', () => {
+      const url = buildWhatsAppUrl(
+        '081380604256',
+        null,
+        'Filosofi Teras',
+        98000,
+        'https://www.frasaklausamedia.com/buku/filosofi-teras'
+      );
       assert.ok(url.startsWith('https://wa.me/6281380604256?text='));
       assert.ok(url.includes(encodeURIComponent('Filosofi Teras')));
+      assert.ok(url.includes(encodeURIComponent('https://www.frasaklausamedia.com/buku/filosofi-teras')));
     });
   });
 

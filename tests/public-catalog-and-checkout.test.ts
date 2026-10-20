@@ -100,24 +100,26 @@ describe('Tahap 10: Public Catalog & Checkout Validations Suite', () => {
       assert.strictEqual(normalizeWhatsAppNumber('1234'), DEFAULT_WA_NUMBER);
     });
 
-    test('formatWhatsAppMessage menyusun pesan baku pemesanan dengan judul dan harga Rupiah', () => {
+    test('formatWhatsAppMessage menyusun pesan baku pemesanan dengan judul, url halaman, dan harga Rupiah', () => {
       const msg = formatWhatsAppMessage(
         DEFAULT_WA_TEMPLATE,
         'Jejak Sunyi di Sudut Kota',
-        75000
+        75000,
+        'https://www.frasaklausamedia.com/buku/jejak-sunyi-di-sudut-kota'
       );
       assert.match(
         msg,
-        /Halo Frasa Klausa Media, saya ingin memesan buku "Jejak Sunyi di Sudut Kota" seharga Rp\s?75\.000\. Apakah stok masih tersedia\?/
+        /Halo Frasa Klausa Media, saya ingin memesan buku "Jejak Sunyi di Sudut Kota"\s+dengan alamat url: https:\/\/www\.frasaklausamedia\.com\/buku\/jejak-sunyi-di-sudut-kota seharga Rp\s?75\.000\. Apakah stok masih tersedia\?/
       );
     });
 
-    test('buildWhatsAppUrl membentuk URL wa.me yang di-encode secara valid di server', () => {
+    test('buildWhatsAppUrl membentuk URL wa.me yang di-encode secara valid di server dengan URL buku', () => {
       const url = buildWhatsAppUrl(
         '0813-8060-4256',
         DEFAULT_WA_TEMPLATE,
         'Jejak Sunyi di Sudut Kota',
-        75000
+        75000,
+        'https://www.frasaklausamedia.com/buku/jejak-sunyi-di-sudut-kota'
       );
 
       assert.ok(url.startsWith('https://wa.me/6281380604256?text='));
@@ -125,7 +127,7 @@ describe('Tahap 10: Public Catalog & Checkout Validations Suite', () => {
       assert.ok(textParam);
       assert.match(
         textParam,
-        /Halo Frasa Klausa Media, saya ingin memesan buku "Jejak Sunyi di Sudut Kota" seharga Rp\s?75\.000\. Apakah stok masih tersedia\?/
+        /Halo Frasa Klausa Media, saya ingin memesan buku "Jejak Sunyi di Sudut Kota"[\s\S]+dengan alamat url: https:\/\/www\.frasaklausamedia\.com\/buku\/jejak-sunyi-di-sudut-kota seharga Rp\s?75\.000\. Apakah stok masih tersedia\?/
       );
     });
 

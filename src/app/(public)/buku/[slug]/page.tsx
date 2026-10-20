@@ -86,8 +86,10 @@ async function BookDetailContent({ params }: BookDetailPageProps) {
     ? Math.round(((book.price_regular - (book.price_promo ?? 0)) / book.price_regular) * 100)
     : 0;
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://frasaklausamedia.com';
-  const bookJsonLd = buildBookJsonLd(book, baseUrl);
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.frasaklausamedia.com';
+  const cleanBaseUrl = baseUrl.replace(/\/+$/, '');
+  const bookUrl = `${cleanBaseUrl}/buku/${book.slug}`;
+  const bookJsonLd = buildBookJsonLd(book, cleanBaseUrl);
   const breadcrumbJsonLd = buildBreadcrumbJsonLd(
     [
       { name: 'Beranda', url: '/' },
@@ -95,7 +97,7 @@ async function BookDetailContent({ params }: BookDetailPageProps) {
       { name: book.category_name, url: `/katalog?kategori=${encodeURIComponent(book.category_name)}` },
       { name: book.title, url: `/buku/${book.slug}` },
     ],
-    baseUrl
+    cleanBaseUrl
   );
 
   return (
@@ -200,6 +202,7 @@ async function BookDetailContent({ params }: BookDetailPageProps) {
               whatsappTemplate={book.whatsapp_message_template}
               shopeeUrl={book.shopee_url}
               tokopediaUrl={book.tokopedia_url}
+              bookUrl={bookUrl}
             />
           </div>
 

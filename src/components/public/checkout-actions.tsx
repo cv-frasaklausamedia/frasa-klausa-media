@@ -10,6 +10,7 @@ interface CheckoutActionsProps {
   whatsappTemplate?: string | null;
   shopeeUrl?: string | null;
   tokopediaUrl?: string | null;
+  bookUrl?: string | null;
 }
 
 export function CheckoutActions({
@@ -20,6 +21,7 @@ export function CheckoutActions({
   whatsappTemplate,
   shopeeUrl,
   tokopediaUrl,
+  bookUrl,
 }: CheckoutActionsProps) {
   // Tentukan harga efektif (gunakan harga promo bila ada dan lebih rendah)
   const effectivePrice =
@@ -27,8 +29,8 @@ export function CheckoutActions({
       ? pricePromo
       : priceRegular;
 
-  // 1. WhatsApp Checkout: URL dibentuk di SERVER dari data DB
-  const waUrl = buildWhatsAppUrl(whatsappNumber, whatsappTemplate, title, effectivePrice);
+  // 1. WhatsApp Checkout: URL dibentuk di SERVER dari data DB dengan URL buku
+  const waUrl = buildWhatsAppUrl(whatsappNumber, whatsappTemplate, title, effectivePrice, bookUrl);
 
   // 2. Fallback Rule Shopee & Tokopedia:
   // Tombol channel marketplace yang tidak memiliki URL dari dashboard admin
