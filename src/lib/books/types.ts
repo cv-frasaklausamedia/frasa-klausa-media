@@ -25,6 +25,7 @@ export interface BookListItem {
   updated_at: string;
   category_id: string;
   category_name: string;
+  category_slug?: string;
 }
 
 /**
@@ -62,6 +63,7 @@ export interface BookListResponse {
 export interface BookCategoryOption {
   id: string;
   name: string;
+  slug: string;
 }
 
 /**

@@ -24,8 +24,16 @@ export async function generateMetadata({ searchParams }: BlogPageProps): Promise
 
   const isFiltered = Boolean(parsed.kategori || parsed.q);
 
+  const formatCategoryLabel = (cat: string) => {
+    return cat
+      .split(/[-_]+/)
+      .filter(Boolean)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   const title = parsed.kategori
-    ? `Artikel Kategori ${parsed.kategori} | Blog ${OFFICIAL_IDENTITY.COMPANY_NAME}`
+    ? `Artikel Kategori ${formatCategoryLabel(parsed.kategori)} | Blog ${OFFICIAL_IDENTITY.COMPANY_NAME}`
     : `Blog & Kabar Literasi | ${OFFICIAL_IDENTITY.COMPANY_NAME}`;
   const description =
     'Kumpulan artikel sastra, wawasan penerbitan buku, tips menulis, dan kabar kegiatan literasi terkini dari Frasa Klausa Media.';
@@ -175,9 +183,9 @@ async function BlogContent({ searchParams }: BlogPageProps) {
       {(queryParams.kategori || queryParams.q) && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
           <span>Menampilkan hasil untuk:</span>
-          {activeCategory && (
+          {queryParams.kategori && (
             <Badge variant="secondary" className="gap-1 text-xs">
-              Kategori: {activeCategory.name}
+              Kategori: {activeCategory?.name || queryParams.kategori}
               <Link href={queryParams.q ? `/blog?q=${encodeURIComponent(queryParams.q)}` : '/blog'}>
                 <X className="h-3 w-3 hover:text-foreground" />
               </Link>

@@ -64,6 +64,14 @@ describe('Tahap 10: Public Catalog & Checkout Validations Suite', () => {
 
       const withCategory = publicCatalogQuerySchema.parse({ category: 'puisi' });
       assert.strictEqual(withCategory.kategori, 'puisi');
+
+      // Mengabaikan kategori string kosong atau spasi
+      const withEmpty = publicCatalogQuerySchema.parse({ kategori: '   ' });
+      assert.strictEqual(withEmpty.kategori, undefined);
+
+      // Mendukung normalisasi whitespace di sekitar nama/slug kategori
+      const withTrim = publicCatalogQuerySchema.parse({ kategori: '  novel-sastra  ' });
+      assert.strictEqual(withTrim.kategori, 'novel-sastra');
     });
 
     test('membatasi dan membersihkan parameter kata kunci pencarian (max 100 karakter)', () => {

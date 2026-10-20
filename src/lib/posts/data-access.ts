@@ -573,13 +573,26 @@ export async function getPublicPosts(
     .eq('status', 'published')
     .lte('published_at', nowIso);
 
-  // Filter Kategori (mencocokkan slug atau ID)
-  if (kategori) {
-    const { data: catData } = await supabase
-      .from('blog_categories')
-      .select('id')
-      .or(`slug.eq.${kategori},id.eq.${kategori}`)
-      .maybeSingle();
+  // Filter Kategori (mencocokkan slug atau ID dengan aman terhadap tipe UUID)
+  if (kategori && kategori.toLowerCase() !== 'all') {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(kategori);
+    const catQuery = supabase.from('blog_categories').select('id');
+
+    const { data: catData, error: catError } = await (isUuid
+      ? catQuery.eq('id', kategori)
+      : catQuery.eq('slug', kategori)
+    ).maybeSingle();
+
+    if (catError) {
+      console.error('[getPublicPosts] Category lookup error:', catError);
+      return {
+        items: [],
+        totalCount: 0,
+        page,
+        pageSize,
+        pageCount: 0,
+      };
+    }
 
     if (catData?.id) {
       query = query.eq('category_id', catData.id);

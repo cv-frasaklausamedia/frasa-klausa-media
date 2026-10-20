@@ -24,11 +24,24 @@ export async function generateMetadata({ searchParams }: KatalogPageProps): Prom
   // Hindari indexing duplikat untuk kombinasi filter rentang harga / pencarian tertentu (Tahap 12 alignment)
   const isFiltered = Boolean(parsed.kategori || parsed.minPrice || parsed.maxPrice || parsed.q);
 
-  const title = parsed.kategori
-    ? `Katalog Buku Kategori ${parsed.kategori} | ${OFFICIAL_IDENTITY.COMPANY_NAME}`
+  let categoryLabel: string | null = null;
+  if (parsed.kategori) {
+    const categories = await getBookCategoriesOptions();
+    const matched = categories.find(
+      (c) =>
+        c.slug.toLowerCase() === parsed.kategori!.toLowerCase() ||
+        c.name.toLowerCase() === parsed.kategori!.toLowerCase() ||
+        c.id.toLowerCase() === parsed.kategori!.toLowerCase()
+    );
+    categoryLabel = matched ? matched.name : parsed.kategori;
+  }
+
+  const title = categoryLabel
+    ? `Katalog Buku Kategori ${categoryLabel} | ${OFFICIAL_IDENTITY.COMPANY_NAME}`
     : `Katalog Buku Lengkap | ${OFFICIAL_IDENTITY.COMPANY_NAME}`;
-  const description =
-    'Jelajahi karya sastra, novel, antologi puisi, dan buku berkualitas terbitan Frasa Klausa Media dengan filter kategori dan rentang harga.';
+  const description = categoryLabel
+    ? `Jelajahi karya sastra dan buku berkualitas kategori ${categoryLabel} terbitan Frasa Klausa Media.`
+    : 'Jelajahi karya sastra, novel, antologi puisi, dan buku berkualitas terbitan Frasa Klausa Media dengan filter kategori dan rentang harga.';
 
   return {
     title,
@@ -67,35 +80,49 @@ async function KatalogContent({ searchParams }: KatalogPageProps) {
 
   const { items: books, totalCount, page, pageCount } = booksResponse;
 
+  const currentCategoryObj = categories.find(
+    (c) =>
+      c.slug.toLowerCase() === (queryParams.kategori || '').toLowerCase() ||
+      c.name.toLowerCase() === (queryParams.kategori || '').toLowerCase() ||
+      c.id.toLowerCase() === (queryParams.kategori || '').toLowerCase()
+  );
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
       {/* 1. Header & Breadcrumb */}
       <div className="space-y-3">
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
           <Link href="/" className="hover:text-foreground transition-colors">
             Beranda
           </Link>
-          <ChevronRight className="h-3.5 w-3.5" />
-          <span className="font-semibold text-foreground">Katalog Buku</span>
-          {queryParams.kategori && (
+          <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+          {currentCategoryObj ? (
             <>
-              <ChevronRight className="h-3.5 w-3.5" />
-              <span className="text-primary font-medium">{queryParams.kategori}</span>
+              <Link href="/katalog" className="hover:text-foreground transition-colors">
+                Katalog Buku
+              </Link>
+              <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+              <span className="font-semibold text-primary">{currentCategoryObj.name}</span>
             </>
+          ) : (
+            <span className="font-semibold text-foreground">Katalog Buku</span>
           )}
         </nav>
 
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
             <h1 className="text-3xl sm:text-4xl font-serif font-bold tracking-tight text-foreground">
-              Katalog Buku
+              {currentCategoryObj ? `Kategori: ${currentCategoryObj.name}` : 'Katalog Buku'}
             </h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">
-              Menampilkan karya-karya pilihan kurator dan rilis resmi Frasa Klausa Media.
+            <p className="mt-1.5 text-sm text-muted-foreground max-w-2xl">
+              {currentCategoryObj
+                ? `Menampilkan koleksi buku pilihan dalam kategori ${currentCategoryObj.name} terbitan Frasa Klausa Media.`
+                : 'Menampilkan karya-karya sastra dan buku pilihan kurator terbitan Frasa Klausa Media.'}
             </p>
           </div>
-          <div className="text-xs text-muted-foreground font-medium self-start sm:self-auto">
-            Total {totalCount} judul buku ditemukan
+          <div className="inline-flex items-center gap-2 text-xs text-muted-foreground font-medium self-start sm:self-auto bg-muted/60 px-3.5 py-1.5 rounded-full border">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Total <strong>{totalCount}</strong> judul buku</span>
           </div>
         </div>
       </div>
@@ -111,8 +138,8 @@ async function KatalogContent({ searchParams }: KatalogPageProps) {
 
       {/* 3. Toolbar Hasil & Pengurutan */}
       <div className="flex items-center justify-between border-b pb-4 gap-4">
-        <span className="text-xs text-muted-foreground">
-          Halaman {page} dari {pageCount}
+        <span className="text-xs text-muted-foreground font-medium">
+          Halaman <strong className="text-foreground">{page}</strong> dari <strong>{pageCount}</strong>
         </span>
         <KatalogSortSelect currentSort={queryParams.sort} />
       </div>
@@ -126,7 +153,7 @@ async function KatalogContent({ searchParams }: KatalogPageProps) {
         </div>
       ) : (
         /* Empty State yang Ramah */
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16 px-4 text-center">
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16 px-4 text-center bg-muted/15">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground mb-4">
             <BookOpen className="h-6 w-6" />
           </div>
@@ -134,12 +161,14 @@ async function KatalogContent({ searchParams }: KatalogPageProps) {
             Tidak ada buku yang sesuai kriteria
           </h2>
           <p className="mt-1 text-xs text-muted-foreground max-w-sm">
-            Coba sesuaikan kata kunci pencarian, ubah rentang harga, atau reset filter untuk melihat koleksi lainnya.
+            {currentCategoryObj
+              ? `Belum ada buku yang diterbitkan dalam kategori "${currentCategoryObj.name}". Coba sesuaikan filter atau lihat kategori lain.`
+              : 'Coba sesuaikan kata kunci pencarian, ubah rentang harga, atau reset filter untuk melihat koleksi lainnya.'}
           </p>
           <div className="mt-6">
             <Link
               href="/katalog"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary underline underline-offset-4 hover:text-primary/80"
+              className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors"
             >
               Kembalikan ke Semua Buku
             </Link>

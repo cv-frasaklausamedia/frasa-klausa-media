@@ -396,12 +396,22 @@ export const publicBlogQuerySchema = z
     }, z.string().catch('')),
 
     kategori: z.preprocess((val) => {
-      if (typeof val === 'string' && val.trim() !== '') return val.trim();
+      if (typeof val === 'string') {
+        const trimmed = val.trim();
+        if (trimmed !== '' && trimmed.toLowerCase() !== 'all') {
+          return trimmed;
+        }
+      }
       return undefined;
     }, z.string().optional()),
 
     category: z.preprocess((val) => {
-      if (typeof val === 'string' && val.trim() !== '') return val.trim();
+      if (typeof val === 'string') {
+        const trimmed = val.trim();
+        if (trimmed !== '' && trimmed.toLowerCase() !== 'all') {
+          return trimmed;
+        }
+      }
       return undefined;
     }, z.string().optional()),
 

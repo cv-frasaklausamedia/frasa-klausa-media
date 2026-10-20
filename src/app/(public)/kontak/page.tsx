@@ -58,166 +58,170 @@ async function ContactContent() {
   const mapsEmbedUrl = contact.maps_embed_url || defaultMapsUrl;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 space-y-10">
-      {/* 1. Header & Breadcrumb */}
-      <div className="space-y-3">
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Link href="/" className="hover:text-foreground transition-colors">
-            Beranda
-          </Link>
-          <ChevronRight className="h-3.5 w-3.5" />
-          <span className="font-semibold text-foreground">Kontak Kami</span>
-        </nav>
+    <div className="flex flex-col gap-10 sm:gap-12 pb-16">
+      {/* 1. Header Section - Full-Bleed Gradient Strip */}
+      <section className="relative overflow-hidden border-b bg-gradient-to-b from-muted/40 via-background to-background py-10 sm:py-14 lg:py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-4">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
+            <Link href="/" className="hover:text-foreground transition-colors">
+              Beranda
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+            <span className="font-semibold text-foreground">Kontak Kami</span>
+          </nav>
 
-        <div className="space-y-1.5">
-          <Badge
-            variant="outline"
-            className="gap-1.5 px-3 py-1 text-xs border-primary/30 text-primary shadow-2xs inline-flex mb-1"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            Layanan & Bantuan
-          </Badge>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold tracking-tight text-foreground">
-            Hubungi Redaksi
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground max-w-2xl leading-relaxed">
-            Punya pertanyaan mengenai pengajuan naskah, kerja sama penerbitan, atau katalog buku? Kami siap membantu Anda.
-          </p>
+          <div className="space-y-2 max-w-3xl">
+            <Badge
+              variant="outline"
+              className="gap-1.5 px-3 py-1 text-xs border-primary/30 text-primary shadow-2xs inline-flex mb-1"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Layanan & Bantuan
+            </Badge>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold tracking-tight text-foreground">
+              Hubungi Redaksi
+            </h1>
+            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+              Punya pertanyaan mengenai pengajuan naskah, kerja sama penerbitan, atau katalog buku? Kami siap membantu Anda.
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* 2. Grid Dua Kolom: Info Kontak Resmi + Peta & Formulir Inquiry */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Kolom Kiri: Detail Kontak, Sosmed, dan Google Maps Embed */}
-        <div className="lg:col-span-5 space-y-6">
-          {/* Kartu Informasi Resmi */}
-          <div className="rounded-2xl border bg-card text-card-foreground shadow-xs p-6 space-y-5">
-            <h2 className="font-serif font-bold text-lg text-foreground border-b pb-3">
-              Informasi Resmi Penerbit
-            </h2>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+          {/* Kolom Kiri: Detail Kontak, Sosmed, dan Google Maps Embed */}
+          <div className="lg:col-span-5 space-y-6">
+            {/* Kartu Informasi Resmi */}
+            <div className="rounded-2xl border bg-card text-card-foreground shadow-xs p-6 sm:p-8 space-y-5">
+              <h2 className="font-serif font-bold text-lg text-foreground border-b pb-3">
+                Informasi Resmi Penerbit
+              </h2>
 
-            <div className="space-y-4 text-xs sm:text-sm">
-              {/* WhatsApp / Telepon */}
-              <div className="flex items-start gap-3.5">
-                <div className="rounded-lg bg-emerald-500/10 p-2 text-emerald-600 dark:text-emerald-400 shrink-0">
-                  <Phone className="h-4 w-4" />
+              <div className="space-y-4 text-xs sm:text-sm">
+                {/* WhatsApp / Telepon */}
+                <div className="flex items-start gap-3.5">
+                  <div className="rounded-lg bg-emerald-500/10 p-2 text-emerald-600 dark:text-emerald-400 shrink-0">
+                    <Phone className="h-4 w-4" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="text-[11px] font-semibold text-muted-foreground uppercase">
+                      Telepon / WhatsApp
+                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <a
+                        href={`https://wa.me/${waNumber}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-foreground hover:text-primary transition-colors flex items-center gap-1"
+                      >
+                        {phoneDisplay}
+                        <ExternalLink className="h-3 w-3 opacity-60" />
+                      </a>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-0.5">
-                  <span className="text-[11px] font-semibold text-muted-foreground uppercase">
-                    Telepon / WhatsApp
-                  </span>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <a
-                      href={`https://wa.me/${waNumber}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium text-foreground hover:text-primary transition-colors flex items-center gap-1"
-                    >
-                      {phoneDisplay}
-                      <ExternalLink className="h-3 w-3 opacity-60" />
-                    </a>
+
+                {/* Email Resmi */}
+                <div className="flex items-start gap-3.5">
+                  <div className="rounded-lg bg-primary/10 p-2 text-primary shrink-0">
+                    <Mail className="h-4 w-4" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="text-[11px] font-semibold text-muted-foreground uppercase">
+                      Email Resmi
+                    </span>
+                    <div>
+                      <a
+                        href={`mailto:${emailDisplay}`}
+                        className="font-medium text-foreground hover:text-primary transition-colors"
+                      >
+                        {emailDisplay}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Alamat Kantor */}
+                <div className="flex items-start gap-3.5">
+                  <div className="rounded-lg bg-muted p-2 text-muted-foreground shrink-0">
+                    <MapPin className="h-4 w-4" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="text-[11px] font-semibold text-muted-foreground uppercase">
+                      Alamat Kantor
+                    </span>
+                    <p className="text-foreground leading-relaxed">
+                      {contact.address || 'Jakarta, Indonesia'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Jam Operasional */}
+                <div className="flex items-start gap-3.5">
+                  <div className="rounded-lg bg-muted p-2 text-muted-foreground shrink-0">
+                    <Clock className="h-4 w-4" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="text-[11px] font-semibold text-muted-foreground uppercase">
+                      Jam Operasional
+                    </span>
+                    <p className="text-foreground leading-relaxed">
+                      {contact.operating_hours || 'Senin – Jumat: 09.00 – 17.00 WIB'}
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* Email Resmi */}
-              <div className="flex items-start gap-3.5">
-                <div className="rounded-lg bg-primary/10 p-2 text-primary shrink-0">
-                  <Mail className="h-4 w-4" />
-                </div>
-                <div className="space-y-0.5">
-                  <span className="text-[11px] font-semibold text-muted-foreground uppercase">
-                    Email Resmi
-                  </span>
-                  <div>
-                    <a
-                      href={`mailto:${emailDisplay}`}
-                      className="font-medium text-foreground hover:text-primary transition-colors"
-                    >
-                      {emailDisplay}
-                    </a>
-                  </div>
-                </div>
-              </div>
-
-              {/* Alamat Kantor */}
-              <div className="flex items-start gap-3.5">
-                <div className="rounded-lg bg-muted p-2 text-muted-foreground shrink-0">
-                  <MapPin className="h-4 w-4" />
-                </div>
-                <div className="space-y-0.5">
-                  <span className="text-[11px] font-semibold text-muted-foreground uppercase">
-                    Alamat Kantor
-                  </span>
-                  <p className="text-foreground leading-relaxed">
-                    {contact.address || 'Jakarta, Indonesia'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Jam Operasional */}
-              <div className="flex items-start gap-3.5">
-                <div className="rounded-lg bg-muted p-2 text-muted-foreground shrink-0">
-                  <Clock className="h-4 w-4" />
-                </div>
-                <div className="space-y-0.5">
-                  <span className="text-[11px] font-semibold text-muted-foreground uppercase">
-                    Jam Operasional
-                  </span>
-                  <p className="text-foreground leading-relaxed">
-                    {contact.operating_hours || 'Senin – Jumat: 09.00 – 17.00 WIB'}
-                  </p>
-                </div>
+              {/* Tombol Aksi Cepat WhatsApp */}
+              <div className="pt-2 border-t">
+                <Button asChild className="w-full gap-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs">
+                  <a
+                    href={`https://wa.me/${waNumber}?text=${encodeURIComponent('Halo Frasa Klausa Media, saya ingin berkonsultasi seputar penerbitan buku.')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Hubungi via WhatsApp
+                  </a>
+                </Button>
               </div>
             </div>
 
-            {/* Tombol Aksi Cepat WhatsApp */}
-            <div className="pt-2 border-t">
-              <Button asChild className="w-full gap-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">
+            {/* Peta Lokasi Kantor: Responsive Google Maps Embed */}
+            <div className="rounded-2xl border bg-card text-card-foreground shadow-xs overflow-hidden space-y-2 p-4 sm:p-5">
+              <div className="flex items-center justify-between pb-1">
+                <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-primary" /> Peta Lokasi Kantor
+                </span>
                 <a
-                  href={`https://wa.me/${waNumber}?text=${encodeURIComponent('Halo Frasa Klausa Media, saya ingin berkonsultasi seputar penerbitan buku.')}`}
+                  href="https://maps.google.com"
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="text-[11px] text-primary hover:underline flex items-center gap-1"
                 >
-                  <MessageCircle className="h-4 w-4" />
-                  Hubungi via WhatsApp
+                  Buka di Google Maps <ExternalLink className="h-2.5 w-2.5" />
                 </a>
-              </Button>
+              </div>
+
+              <div className="relative aspect-[16/10] w-full rounded-xl overflow-hidden border bg-muted">
+                <iframe
+                  src={mapsEmbedUrl}
+                  title="Peta Lokasi Kantor Frasa Klausa Media"
+                  className="absolute inset-0 h-full w-full border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
+              </div>
             </div>
           </div>
 
-          {/* Peta Lokasi Kantor: Responsive Google Maps Embed (No heavy maplibre-gl dependency) */}
-          <div className="rounded-2xl border bg-card text-card-foreground shadow-xs overflow-hidden space-y-2 p-4">
-            <div className="flex items-center justify-between pb-1">
-              <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5 text-primary" /> Peta Lokasi Kantor
-              </span>
-              <a
-                href="https://maps.google.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[11px] text-primary hover:underline flex items-center gap-1"
-              >
-                Buka di Google Maps <ExternalLink className="h-2.5 w-2.5" />
-              </a>
-            </div>
-
-            <div className="relative aspect-[16/10] w-full rounded-xl overflow-hidden border bg-muted">
-              <iframe
-                src={mapsEmbedUrl}
-                title="Peta Lokasi Kantor Frasa Klausa Media"
-                className="absolute inset-0 h-full w-full border-0"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                allowFullScreen
-              />
-            </div>
+          {/* Kolom Kanan: Form Kontak Interaktif */}
+          <div className="lg:col-span-7">
+            <ContactInquiryForm />
           </div>
-        </div>
-
-        {/* Kolom Kanan: Form Kontak Interaktif */}
-        <div className="lg:col-span-7">
-          <ContactInquiryForm />
         </div>
       </div>
     </div>

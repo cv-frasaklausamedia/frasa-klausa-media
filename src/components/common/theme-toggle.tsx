@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, Monitor, Check } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,7 +12,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export function ThemeToggle() {
-  const { setTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+  const { theme, setTheme } = useTheme();
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <DropdownMenu>
@@ -23,15 +28,44 @@ export function ThemeToggle() {
           <span className="sr-only">Ganti tema tampilan</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme('light')}>
-          Terang
+      <DropdownMenuContent align="end" className="min-w-[9.5rem]">
+        <DropdownMenuItem
+          onClick={() => setTheme('light')}
+          className="flex items-center justify-between cursor-pointer"
+        >
+          <div className="flex items-center gap-2">
+            <Sun className="h-4 w-4 text-amber-500" />
+            <span>Terang</span>
+          </div>
+          {mounted && theme === 'light' && (
+            <Check className="h-3.5 w-3.5 text-primary ml-auto" />
+          )}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme('dark')}>
-          Gelap
+
+        <DropdownMenuItem
+          onClick={() => setTheme('dark')}
+          className="flex items-center justify-between cursor-pointer"
+        >
+          <div className="flex items-center gap-2">
+            <Moon className="h-4 w-4 text-sky-500" />
+            <span>Gelap</span>
+          </div>
+          {mounted && theme === 'dark' && (
+            <Check className="h-3.5 w-3.5 text-primary ml-auto" />
+          )}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme('system')}>
-          Sistem
+
+        <DropdownMenuItem
+          onClick={() => setTheme('system')}
+          className="flex items-center justify-between cursor-pointer"
+        >
+          <div className="flex items-center gap-2">
+            <Monitor className="h-4 w-4 text-muted-foreground" />
+            <span>Sistem</span>
+          </div>
+          {mounted && theme === 'system' && (
+            <Check className="h-3.5 w-3.5 text-primary ml-auto" />
+          )}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

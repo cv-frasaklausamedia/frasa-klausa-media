@@ -26,6 +26,26 @@ describe('Tahap 11: Public Blog & Typography Suite (PRD §6.3.5 & US-06)', () =>
       assert.strictEqual(withCategory.kategori, 'tips-menulis');
     });
 
+    test('menormalisasi kategori bernilai "all" atau kosong menjadi undefined', () => {
+      const withAllLower = publicBlogQuerySchema.parse({ kategori: 'all' });
+      assert.strictEqual(withAllLower.kategori, undefined);
+
+      const withAllUpper = publicBlogQuerySchema.parse({ kategori: 'ALL' });
+      assert.strictEqual(withAllUpper.kategori, undefined);
+
+      const withCategoryAll = publicBlogQuerySchema.parse({ category: 'all' });
+      assert.strictEqual(withCategoryAll.kategori, undefined);
+
+      const withSpaces = publicBlogQuerySchema.parse({ kategori: '   ' });
+      assert.strictEqual(withSpaces.kategori, undefined);
+    });
+
+    test('memproses parameter kategori bertipe UUID dengan benar', () => {
+      const uuid = 'a1b2c3d4-e5f6-4a1b-8c2d-1234567890ab';
+      const parsed = publicBlogQuerySchema.parse({ kategori: uuid });
+      assert.strictEqual(parsed.kategori, uuid);
+    });
+
     test('membatasi query pencarian q maksimal 100 karakter dan membersihkan spasi', () => {
       const longQuery = '  ' + 'karya sastra '.repeat(20) + '  ';
       const parsed = publicBlogQuerySchema.parse({ q: longQuery });

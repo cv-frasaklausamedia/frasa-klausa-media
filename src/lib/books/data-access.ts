@@ -17,6 +17,7 @@ import type {
   BookFormValues,
   PublicCatalogQueryParams,
 } from '@/validations/book';
+import { SLUG_REGEX } from '@/validations/book';
 
 /**
  * Sanitasi string pencarian agar tidak merusak filter ILIKE atau PostgREST syntax
@@ -43,16 +44,19 @@ interface RawBookDbRow {
   created_at: string;
   updated_at: string;
   category_id: string;
-  book_categories?: { id: string; name: string } | { id: string; name: string }[] | null;
+  book_categories?: { id: string; name: string; slug?: string } | { id: string; name: string; slug?: string }[] | null;
 }
 
 function mapBookRow(row: RawBookDbRow): BookListItem {
   let categoryName = 'Tanpa Kategori';
+  let categorySlug: string | undefined = undefined;
   if (row.book_categories) {
     if (Array.isArray(row.book_categories) && row.book_categories.length > 0) {
       categoryName = row.book_categories[0]?.name ?? 'Tanpa Kategori';
+      categorySlug = row.book_categories[0]?.slug;
     } else if ('name' in row.book_categories) {
-      categoryName = (row.book_categories as { name: string }).name ?? 'Tanpa Kategori';
+      categoryName = (row.book_categories as { name: string; slug?: string }).name ?? 'Tanpa Kategori';
+      categorySlug = (row.book_categories as { name: string; slug?: string }).slug;
     }
   }
 
@@ -72,6 +76,7 @@ function mapBookRow(row: RawBookDbRow): BookListItem {
     updated_at: row.updated_at,
     category_id: row.category_id,
     category_name: categoryName,
+    category_slug: categorySlug,
   };
 }
 
@@ -397,11 +402,11 @@ export async function toggleBookField(
  * Mengambil daftar opsi kategori untuk dropdown toolbar dan form
  */
 export async function getBookCategoriesOptions(): Promise<BookCategoryOption[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const { data, error } = await supabase
     .from('book_categories')
-    .select('id, name')
+    .select('id, name, slug')
     .order('name', { ascending: true });
 
   if (error) {
@@ -409,7 +414,11 @@ export async function getBookCategoriesOptions(): Promise<BookCategoryOption[]> 
     return [];
   }
 
-  return data || [];
+  return ((data as { id: string; name: string; slug?: string }[]) || []).map((row) => ({
+    id: row.id,
+    name: row.name,
+    slug: row.slug || '',
+  }));
 }
 
 /**
@@ -553,13 +562,18 @@ export async function getPublicBooks(
     );
   }
 
-  // 2. Filter Kategori (bisa slug atau UUID)
+  // 2. Filter Kategori (mendukung slug, UUID, atau fallback pencocokan nama kategori)
   if (kategori && kategori !== 'all') {
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(kategori);
     if (isUuid) {
       query = query.eq('category_id', kategori);
     } else {
-      query = query.eq('book_categories.slug', kategori);
+      const cleanSlug = kategori.toLowerCase().trim();
+      if (SLUG_REGEX.test(cleanSlug)) {
+        query = query.eq('book_categories.slug', cleanSlug);
+      } else {
+        query = query.ilike('book_categories.name', `%${kategori.trim()}%`);
+      }
     }
   }
 

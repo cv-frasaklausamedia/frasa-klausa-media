@@ -2,10 +2,11 @@
 
 import * as React from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Filter, RotateCcw, Search } from 'lucide-react';
+import { Filter, RotateCcw, Search, Tag, Banknote, X, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -14,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { BookCategoryOption } from '@/lib/books/types';
+import { formatRupiah } from '@/validations/book';
 
 interface KatalogFilterBarProps {
   categories: BookCategoryOption[];
@@ -34,7 +36,25 @@ export function KatalogFilterBar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [selectedCategory, setSelectedCategory] = React.useState<string>(currentCategory || 'all');
+  // Helper resolusi slug kategori secara defensif (menerima slug, id, atau nama)
+  const resolveCategoryValue = React.useCallback(
+    (val?: string) => {
+      if (!val || val === 'all') return 'all';
+      const clean = val.trim().toLowerCase();
+      const matched = categories.find(
+        (c) =>
+          c.slug.toLowerCase() === clean ||
+          c.name.toLowerCase() === clean ||
+          c.id.toLowerCase() === clean
+      );
+      return matched ? matched.slug : val;
+    },
+    [categories]
+  );
+
+  const [selectedCategory, setSelectedCategory] = React.useState<string>(() =>
+    resolveCategoryValue(currentCategory)
+  );
   const [minPriceInput, setMinPriceInput] = React.useState<string>(
     currentMinPrice ? String(currentMinPrice) : ''
   );
@@ -43,7 +63,7 @@ export function KatalogFilterBar({
   );
   const [qInput, setQInput] = React.useState<string>(currentQ || '');
 
-  // Sinkronkan state lokal bila prop berubah (misal dari URL luar) saat render tanpa cascading effect
+  // Sinkronisasi state lokal saat props dari URL luar berganti
   const [prevProps, setPrevProps] = React.useState({
     currentCategory,
     currentMinPrice,
@@ -58,7 +78,7 @@ export function KatalogFilterBar({
     prevProps.currentQ !== currentQ
   ) {
     setPrevProps({ currentCategory, currentMinPrice, currentMaxPrice, currentQ });
-    setSelectedCategory(currentCategory || 'all');
+    setSelectedCategory(resolveCategoryValue(currentCategory));
     setMinPriceInput(currentMinPrice ? String(currentMinPrice) : '');
     setMaxPriceInput(currentMaxPrice ? String(currentMaxPrice) : '');
     setQInput(currentQ || '');
@@ -68,7 +88,7 @@ export function KatalogFilterBar({
     e.preventDefault();
     const params = new URLSearchParams(searchParams.toString());
 
-    // Reset pagination ke halaman 1 saat filter baru diterapkan
+    // Reset ke halaman 1 ketika kriteria filter baru diterapkan
     params.set('page', '1');
 
     if (qInput.trim()) {
@@ -108,45 +128,98 @@ export function KatalogFilterBar({
     router.push(pathname);
   };
 
-  const hasActiveFilters = Boolean(
-    (selectedCategory && selectedCategory !== 'all') ||
-      minPriceInput ||
-      maxPriceInput ||
-      qInput
+  // Helper untuk menghapus satu filter tertentu secara langsung via badge
+  const removeFilterParam = (key: 'q' | 'kategori' | 'price') => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', '1');
+    if (key === 'price') {
+      params.delete('minPrice');
+      params.delete('maxPrice');
+      setMinPriceInput('');
+      setMaxPriceInput('');
+    } else if (key === 'kategori') {
+      params.delete('kategori');
+      setSelectedCategory('all');
+    } else if (key === 'q') {
+      params.delete('q');
+      setQInput('');
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  // Menemukan label nama kategori terpilih untuk chip filter
+  const activeCategoryObj = categories.find(
+    (c) =>
+      c.slug.toLowerCase() === (currentCategory || '').trim().toLowerCase() ||
+      c.name.toLowerCase() === (currentCategory || '').trim().toLowerCase() ||
+      c.id.toLowerCase() === (currentCategory || '').trim().toLowerCase()
   );
 
+  const isCategoryActive = Boolean(currentCategory && currentCategory !== 'all');
+  const isSearchActive = Boolean(currentQ && currentQ.trim().length > 0);
+  const isPriceActive = Boolean((currentMinPrice && currentMinPrice > 0) || (currentMaxPrice && currentMaxPrice > 0));
+  const hasActiveFilters = isCategoryActive || isSearchActive || isPriceActive;
+
   return (
-    <div className="rounded-xl border bg-card p-4 sm:p-5 shadow-xs transition-colors">
-      <form onSubmit={handleApplyFilter} className="flex flex-col gap-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-end">
+    <div className="rounded-2xl border bg-card/80 backdrop-blur-xs p-4 sm:p-5 shadow-xs transition-all space-y-4">
+      {/* Header Kecil Filter Bar */}
+      <div className="flex items-center justify-between border-b pb-3">
+        <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+          <SlidersHorizontal className="h-4 w-4 text-primary" />
+          <span>Filter & Pencarian Koleksi</span>
+        </div>
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={handleResetFilter}
+            className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-destructive transition-colors"
+          >
+            <RotateCcw className="h-3 w-3" />
+            <span>Reset Semua</span>
+          </button>
+        )}
+      </div>
+
+      <form onSubmit={handleApplyFilter}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4 items-end">
           {/* 1. Pencarian Kata Kunci */}
           <div className="space-y-1.5">
-            <Label htmlFor="filter-q" className="text-xs font-semibold text-muted-foreground">
-              Cari Buku / Penulis
+            <Label htmlFor="filter-q" className="text-xs font-medium text-foreground/80 flex items-center gap-1.5">
+              <Search className="h-3.5 w-3.5 text-muted-foreground" />
+              <span>Cari Buku</span>
             </Label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input
                 id="filter-q"
                 type="text"
                 placeholder="Judul, penulis, ISBN..."
                 value={qInput}
                 onChange={(e) => setQInput(e.target.value)}
-                className="pl-9 h-9 text-xs"
+                className="h-9 text-xs pl-3 pr-8 bg-background/50 focus:bg-background transition-colors"
               />
+              {qInput && (
+                <button
+                  type="button"
+                  onClick={() => setQInput('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
           </div>
 
           {/* 2. Pilihan Kategori */}
           <div className="space-y-1.5">
-            <Label htmlFor="filter-category" className="text-xs font-semibold text-muted-foreground">
-              Kategori Buku
+            <Label htmlFor="filter-category" className="text-xs font-medium text-foreground/80 flex items-center gap-1.5">
+              <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+              <span>Kategori Buku</span>
             </Label>
             <Select
               value={selectedCategory}
               onValueChange={(val) => setSelectedCategory(val)}
             >
-              <SelectTrigger id="filter-category" aria-label="Pilih kategori buku" className="h-9 text-xs">
+              <SelectTrigger id="filter-category" aria-label="Pilih kategori buku" className="h-9 text-xs bg-background/50 focus:bg-background">
                 <SelectValue placeholder="Semua Kategori" />
               </SelectTrigger>
               <SelectContent>
@@ -154,7 +227,7 @@ export function KatalogFilterBar({
                   Semua Kategori
                 </SelectItem>
                 {categories.map((c) => (
-                  <SelectItem key={c.id} value={c.name} className="text-xs">
+                  <SelectItem key={c.id} value={c.slug} className="text-xs">
                     {c.name}
                   </SelectItem>
                 ))}
@@ -164,55 +237,115 @@ export function KatalogFilterBar({
 
           {/* 3. Rentang Harga Min & Max */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-muted-foreground">
-              Rentang Harga (IDR)
+            <Label className="text-xs font-medium text-foreground/80 flex items-center gap-1.5">
+              <Banknote className="h-3.5 w-3.5 text-muted-foreground" />
+              <span>Rentang Harga (IDR)</span>
             </Label>
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                placeholder="Min"
-                aria-label="Harga minimum (IDR)"
-                value={minPriceInput}
-                onChange={(e) => setMinPriceInput(e.target.value)}
-                className="h-9 text-xs"
-                min="0"
-                step="5000"
-              />
-              <span className="text-muted-foreground text-xs" aria-hidden="true">—</span>
-              <Input
-                type="number"
-                placeholder="Max"
-                aria-label="Harga maksimum (IDR)"
-                value={maxPriceInput}
-                onChange={(e) => setMaxPriceInput(e.target.value)}
-                className="h-9 text-xs"
-                min="0"
-                step="5000"
-              />
+            <div className="flex items-center gap-1.5">
+              <div className="relative flex-1">
+                <Input
+                  type="number"
+                  placeholder="Min"
+                  aria-label="Harga minimum (IDR)"
+                  value={minPriceInput}
+                  onChange={(e) => setMinPriceInput(e.target.value)}
+                  className="h-9 text-xs bg-background/50 focus:bg-background"
+                  min="0"
+                  step="5000"
+                />
+              </div>
+              <span className="text-muted-foreground text-xs font-medium select-none">—</span>
+              <div className="relative flex-1">
+                <Input
+                  type="number"
+                  placeholder="Maks"
+                  aria-label="Harga maksimum (IDR)"
+                  value={maxPriceInput}
+                  onChange={(e) => setMaxPriceInput(e.target.value)}
+                  className="h-9 text-xs bg-background/50 focus:bg-background"
+                  min="0"
+                  step="5000"
+                />
+              </div>
             </div>
           </div>
 
-          {/* 4. Tombol Aksi Filter */}
+          {/* 4. Tombol Aksi Terapkan */}
           <div className="flex items-center gap-2 pt-1 sm:pt-0">
-            <Button type="submit" size="sm" className="flex-1 h-9 gap-1.5 text-xs font-medium">
+            <Button type="submit" size="sm" className="w-full h-9 gap-1.5 text-xs font-medium shadow-xs">
               <Filter className="h-3.5 w-3.5" />
-              Terapkan
+              Terapkan Filter
             </Button>
-            {hasActiveFilters && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleResetFilter}
-                className="h-9 gap-1 text-xs text-muted-foreground hover:text-foreground"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-                Reset
-              </Button>
-            )}
           </div>
         </div>
       </form>
+
+      {/* 5. Active Filter Chips / Badges untuk Feedback Interaktif */}
+      {hasActiveFilters && (
+        <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+          <span className="text-[11px] text-muted-foreground font-medium">Filter aktif:</span>
+
+          {isCategoryActive && (
+            <Badge
+              variant="secondary"
+              className="h-6 gap-1.5 pl-2.5 pr-1.5 text-[11px] font-normal border border-primary/20 bg-primary/10 text-primary hover:bg-primary/15 transition-colors"
+            >
+              <Tag className="h-3 w-3" />
+              <span>Kategori: {activeCategoryObj?.name || currentCategory}</span>
+              <button
+                type="button"
+                onClick={() => removeFilterParam('kategori')}
+                className="rounded-full hover:bg-primary/20 p-0.5 ml-0.5 transition-colors"
+                aria-label="Hapus filter kategori"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
+
+          {isSearchActive && (
+            <Badge
+              variant="secondary"
+              className="h-6 gap-1.5 pl-2.5 pr-1.5 text-[11px] font-normal border border-muted-foreground/20 bg-muted text-foreground"
+            >
+              <Search className="h-3 w-3" />
+              <span className="max-w-[120px] truncate">&ldquo;{currentQ}&rdquo;</span>
+              <button
+                type="button"
+                onClick={() => removeFilterParam('q')}
+                className="rounded-full hover:bg-muted-foreground/20 p-0.5 ml-0.5 transition-colors"
+                aria-label="Hapus kata kunci pencarian"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
+
+          {isPriceActive && (
+            <Badge
+              variant="secondary"
+              className="h-6 gap-1.5 pl-2.5 pr-1.5 text-[11px] font-normal border border-muted-foreground/20 bg-muted text-foreground"
+            >
+              <Banknote className="h-3 w-3" />
+              <span>
+                {currentMinPrice && currentMaxPrice
+                  ? `${formatRupiah(currentMinPrice)} - ${formatRupiah(currentMaxPrice)}`
+                  : currentMinPrice
+                  ? `Min. ${formatRupiah(currentMinPrice)}`
+                  : `Maks. ${formatRupiah(currentMaxPrice!)}`}
+              </span>
+              <button
+                type="button"
+                onClick={() => removeFilterParam('price')}
+                className="rounded-full hover:bg-muted-foreground/20 p-0.5 ml-0.5 transition-colors"
+                aria-label="Hapus filter rentang harga"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
+        </div>
+      )}
     </div>
   );
 }
