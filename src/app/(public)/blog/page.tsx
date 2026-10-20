@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { connection } from 'next/server';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Newspaper, ChevronRight, Search, X, BookOpen } from 'lucide-react';
+import { Newspaper, ChevronRight, Search, X } from 'lucide-react';
 
 import { getPublicPosts, getBlogCategoriesOptions } from '@/lib/posts/data-access';
 import { publicBlogQuerySchema } from '@/validations/post';

@@ -12,15 +12,14 @@ interface ShareButtonsProps {
 
 export function ShareButtons({ title, url }: ShareButtonsProps) {
   const [copied, setCopied] = React.useState(false);
-  const [fullUrl, setFullUrl] = React.useState(url || '');
 
-  React.useEffect(() => {
-    if (!url && typeof window !== 'undefined') {
-      setFullUrl(window.location.href);
-    } else if (url) {
-      setFullUrl(url);
-    }
-  }, [url]);
+  // Gunakan useSyncExternalStore untuk URL browser tanpa efek cascading setState
+  const browserUrl = React.useSyncExternalStore(
+    () => () => {},
+    () => (typeof window !== 'undefined' ? window.location.href : ''),
+    () => ''
+  );
+  const fullUrl = url || browserUrl;
 
   const handleCopyLink = async () => {
     try {
@@ -33,21 +32,6 @@ export function ShareButtons({ title, url }: ShareButtonsProps) {
     } catch (err) {
       console.error('Gagal menyalin tautan:', err);
       toast.error('Gagal menyalin tautan.');
-    }
-  };
-
-  const handleNativeShare = async () => {
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      try {
-        await navigator.share({
-          title,
-          url: fullUrl,
-        });
-      } catch {
-        // Abaikan jika user membatalkan share
-      }
-    } else {
-      handleCopyLink();
     }
   };
 

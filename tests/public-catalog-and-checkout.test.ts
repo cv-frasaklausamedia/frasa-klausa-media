@@ -53,7 +53,7 @@ describe('Tahap 10: Public Catalog & Checkout Validations Suite', () => {
       assert.strictEqual(validSort.sort, 'price_asc');
 
       const illegalSort = publicCatalogQuerySchema.parse({
-        sort: "title; DROP TABLE books; --" as any,
+        sort: "title; DROP TABLE books; --" as unknown as 'price_asc',
       });
       assert.strictEqual(illegalSort.sort, 'created_at_desc');
     });

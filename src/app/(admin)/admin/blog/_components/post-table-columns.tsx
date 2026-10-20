@@ -45,11 +45,6 @@ export function getPostColumns({
       header: 'Artikel',
       cell: ({ row }) => {
         const post = row.original;
-        const now = new Date();
-        const isScheduled =
-          post.status === 'published' &&
-          post.published_at &&
-          new Date(post.published_at) > now;
 
         return (
           <div className="flex items-center gap-3 max-w-md">

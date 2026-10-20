@@ -25,23 +25,21 @@ async function UsersContent({ searchParams }: UsersPageProps) {
   // Opt-in ke dynamic request-time rendering
   await connection();
 
-  // Wajib Super Admin di server (Admin biasa otomatis dilempar AuthError 403)
-  const currentUser = await requireSuperAdmin();
-
-  const rawParams = await searchParams;
-  const queryParams = accountQuerySchema.parse(rawParams);
-
+  let currentUser: Awaited<ReturnType<typeof requireSuperAdmin>> | null = null;
   let accountData: AccountListResponse | null = null;
   let hasError = false;
 
   try {
+    currentUser = await requireSuperAdmin();
+    const rawParams = await searchParams;
+    const queryParams = accountQuerySchema.parse(rawParams);
     accountData = await getAccountList(queryParams);
   } catch (error) {
     console.error('[AdminUsersPage] Error loading account list:', error);
     hasError = true;
   }
 
-  if (hasError || !accountData) {
+  if (hasError || !accountData || !currentUser) {
     return (
       <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-6 text-center">
         <div className="flex flex-col items-center justify-center gap-3">

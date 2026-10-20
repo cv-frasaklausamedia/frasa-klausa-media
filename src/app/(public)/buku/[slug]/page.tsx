@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronRight, Sparkles, BookOpen, User, Calendar, Hash, FileText, Building2 } from 'lucide-react';
+import { ChevronRight, Sparkles, User, Calendar, Hash, FileText, Building2 } from 'lucide-react';
 import { getPublicBookBySlug, getRelatedBooks } from '@/lib/books/data-access';
 import { BookGallery } from '@/components/public/book-gallery';
 import { CheckoutActions } from '@/components/public/checkout-actions';

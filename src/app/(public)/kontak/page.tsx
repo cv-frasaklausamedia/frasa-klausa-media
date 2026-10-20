@@ -46,10 +46,7 @@ export const metadata: Metadata = {
 
 async function ContactContent() {
   await connection();
-  const [contact, social] = await Promise.all([
-    getSiteContent('contact'),
-    getSiteContent('social'),
-  ]);
+  const contact = await getSiteContent('contact');
 
   const phoneDisplay = contact.phone || contact.whatsapp || '0813-8060-4256';
   const cleanPhone = phoneDisplay.replace(/[^0-9]/g, '');

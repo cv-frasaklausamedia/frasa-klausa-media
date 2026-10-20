@@ -182,6 +182,9 @@ describe('Admin Management & Settings Validations Suite (Tahap 8 - PRD §6.1, §
 
       const result = systemSettingsFormSchema.safeParse(validData);
       assert.equal(result.success, true);
+
+      const featureResult = featureSettingsSchema.safeParse(validData.features);
+      assert.equal(featureResult.success, true);
     });
 
     it('menolak pengaturan jika mendeteksi token/secret JWT pada input teks', () => {

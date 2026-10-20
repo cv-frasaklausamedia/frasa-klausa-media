@@ -63,11 +63,11 @@ describe('Admin Management & Settings Authorization Suite (Tahap 8 - PRD §5, §
   ): {
     deps: AccountServiceDeps;
     auditLogs: AuditLogEntry[];
-    createdUsers: any[];
+    createdUsers: Record<string, unknown>[];
     statusUpdates: { id: string; isActive: boolean }[];
   } {
     const auditLogs: AuditLogEntry[] = [];
-    const createdUsers: any[] = [];
+    const createdUsers: Record<string, unknown>[] = [];
     const statusUpdates: { id: string; isActive: boolean }[] = [];
 
     const dummyAccounts: Record<string, AdminAccountItem> = {
@@ -144,10 +144,10 @@ describe('Admin Management & Settings Authorization Suite (Tahap 8 - PRD §5, §
   function createMockSettingsDeps(caller: AuthenticatedUser): {
     deps: SettingsServiceDeps;
     auditLogs: AuditLogEntry[];
-    savedSettings: Record<string, any>;
+    savedSettings: Record<string, unknown>;
   } {
     const auditLogs: AuditLogEntry[] = [];
-    const savedSettings: Record<string, any> = {};
+    const savedSettings: Record<string, unknown> = {};
 
     const mockSettingsPayload: SystemSettingsPayload = {
       general: {
@@ -391,7 +391,7 @@ describe('Admin Management & Settings Authorization Suite (Tahap 8 - PRD §5, §
     it('validateAdminRole menolak user nonaktif bahkan jika role-nya super_admin', () => {
       assert.throws(
         () => {
-          validateUserProfile(rawUser, {
+          validateAdminRole(rawUser, {
             ...inactiveUser,
             role: 'super_admin',
             is_active: false,

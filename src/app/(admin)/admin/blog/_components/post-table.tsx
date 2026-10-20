@@ -7,7 +7,7 @@ import {
   getCoreRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { FileText, Inbox, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Inbox, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {

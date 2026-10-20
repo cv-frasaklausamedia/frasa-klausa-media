@@ -25,12 +25,12 @@ export function DynamicCopyright({
   suffix,
   className,
 }: DynamicCopyrightProps) {
-  // Nilai awal stabil untuk prerender server, diperbarui secara presisi di client
-  const [year, setYear] = React.useState<number>(2026);
-
-  React.useEffect(() => {
-    setYear(new Date().getFullYear());
-  }, []);
+  // useSyncExternalStore untuk tahun dinamis tanpa hydration error dan tanpa cascading setState
+  const year = React.useSyncExternalStore(
+    () => () => {},
+    () => new Date().getFullYear(),
+    () => 2026
+  );
 
   return (
     <span className={className}>

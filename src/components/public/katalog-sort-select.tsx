@@ -46,7 +46,7 @@ export function KatalogSortSelect({ currentSort = 'created_at_desc' }: KatalogSo
         Urutkan:
       </span>
       <Select value={currentSort} onValueChange={handleSortChange}>
-        <SelectTrigger className="h-9 w-[170px] text-xs">
+        <SelectTrigger aria-label="Urutkan katalog buku" className="h-9 w-[170px] text-xs">
           <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 opacity-60" />
           <SelectValue placeholder="Urutkan" />
         </SelectTrigger>

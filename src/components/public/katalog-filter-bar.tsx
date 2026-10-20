@@ -43,13 +43,26 @@ export function KatalogFilterBar({
   );
   const [qInput, setQInput] = React.useState<string>(currentQ || '');
 
-  // Sinkronkan state lokal bila prop berubah (misal dari URL luar)
-  React.useEffect(() => {
+  // Sinkronkan state lokal bila prop berubah (misal dari URL luar) saat render tanpa cascading effect
+  const [prevProps, setPrevProps] = React.useState({
+    currentCategory,
+    currentMinPrice,
+    currentMaxPrice,
+    currentQ,
+  });
+
+  if (
+    prevProps.currentCategory !== currentCategory ||
+    prevProps.currentMinPrice !== currentMinPrice ||
+    prevProps.currentMaxPrice !== currentMaxPrice ||
+    prevProps.currentQ !== currentQ
+  ) {
+    setPrevProps({ currentCategory, currentMinPrice, currentMaxPrice, currentQ });
     setSelectedCategory(currentCategory || 'all');
     setMinPriceInput(currentMinPrice ? String(currentMinPrice) : '');
     setMaxPriceInput(currentMaxPrice ? String(currentMaxPrice) : '');
     setQInput(currentQ || '');
-  }, [currentCategory, currentMinPrice, currentMaxPrice, currentQ]);
+  }
 
   const handleApplyFilter = (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,7 +146,7 @@ export function KatalogFilterBar({
               value={selectedCategory}
               onValueChange={(val) => setSelectedCategory(val)}
             >
-              <SelectTrigger id="filter-category" className="h-9 text-xs">
+              <SelectTrigger id="filter-category" aria-label="Pilih kategori buku" className="h-9 text-xs">
                 <SelectValue placeholder="Semua Kategori" />
               </SelectTrigger>
               <SelectContent>

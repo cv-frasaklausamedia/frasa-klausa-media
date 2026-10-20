@@ -1,10 +1,13 @@
 import { Suspense } from 'react';
 import { connection } from 'next/server';
 import type { Metadata } from 'next';
-import { Sparkles, Clock, CalendarX, Layers } from 'lucide-react';
+import Link from 'next/link';
+import { Sparkles, Clock, CalendarX, Layers, AlertCircle, RotateCcw } from 'lucide-react';
 import { requireAdmin } from '@/lib/auth';
 import { bannerQuerySchema } from '@/validations/banner';
 import { getBannersList } from '@/lib/banners/data-access';
+import type { BannerListResponse } from '@/lib/banners/types';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import { BannerTable } from './_components/banner-table';
@@ -20,12 +23,45 @@ interface AdminBannersPageProps {
 
 async function BannersContent({ searchParams }: AdminBannersPageProps) {
   await connection();
-  await requireAdmin();
 
-  const rawParams = await searchParams;
-  const queryParams = bannerQuerySchema.parse(rawParams);
+  let bannerData: BannerListResponse | null = null;
+  let hasError = false;
 
-  const bannerData = await getBannersList(queryParams);
+  try {
+    await requireAdmin();
+    const rawParams = await searchParams;
+    const queryParams = bannerQuerySchema.parse(rawParams);
+    bannerData = await getBannersList(queryParams);
+  } catch (error) {
+    console.error('[AdminBannersPage] Error loading banners list:', error);
+    hasError = true;
+  }
+
+  if (hasError || !bannerData) {
+    return (
+      <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-6 text-center max-w-7xl mx-auto">
+        <div className="flex flex-col items-center justify-center gap-3">
+          <div className="rounded-full bg-destructive/10 p-3 text-destructive">
+            <AlertCircle className="h-6 w-6" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-base font-semibold text-foreground">
+              Gagal Memuat Data Banner Promosi
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Terjadi kendala saat menghubungi basis data atau sesi Anda telah berakhir. Silakan muat ulang halaman.
+            </p>
+          </div>
+          <Button asChild variant="outline" size="sm" className="mt-2">
+            <Link href="/admin/banners">
+              <RotateCcw className="mr-2 h-4 w-4" /> Coba Lagi
+            </Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   const { counts } = bannerData.meta;
 
   return (
@@ -99,7 +135,7 @@ async function BannersContent({ searchParams }: AdminBannersPageProps) {
   );
 }
 
-export default async function AdminBannersPage({ searchParams }: AdminBannersPageProps) {
+export default function AdminBannersPage({ searchParams }: AdminBannersPageProps) {
   return (
     <Suspense
       fallback={

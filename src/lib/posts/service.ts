@@ -7,7 +7,6 @@ import {
   validateImageMagicBytes,
   MAX_BLOG_IMAGE_SIZE_BYTES,
   type PostFormInput,
-  type PostFormValues,
   type PostStatus,
 } from '../../validations/post.ts';
 import {

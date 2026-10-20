@@ -885,10 +885,10 @@ secret/PII (uji dengan sampel); tidak ada temuan keamanan kritis tersisa.
 **Referensi PRD:** §17, §25.
 
 **Deliverables**
-- [ ] Unit test (utility, validator, business rule).
-- [ ] Integration test (data-access, action, auth, RLS dengan role `anon`/`authenticated`).
-- [ ] E2E test (Playwright) flow kritikal publik & admin.
-- [ ] Seed test deterministik tanpa kredensial nyata; coverage terukur.
+- [x] Unit test (utility, validator, business rule).
+- [x] Integration test (data-access, action, auth, RLS dengan role `anon`/`authenticated`).
+- [x] E2E test (Playwright) flow kritikal publik & admin.
+- [x] Seed test deterministik tanpa kredensial nyata; coverage terukur.
 
 **Prompt**
 
@@ -933,11 +933,11 @@ test yang dimatikan hanya untuk meloloskan CI.
 **Referensi PRD:** §22, §21, §25, §26.
 
 **Deliverables**
-- [ ] Pipeline CI: `npm ci` → lint → typecheck → test → build (+ e2e & audit bila memungkinkan).
-- [ ] Environment dev/preview/production dengan env terpisah di Vercel.
-- [ ] Prosedur migrasi produksi yang aman + rollback/recovery plan.
-- [ ] Domain + HTTPS + HSTS (production saja), Search Console.
-- [ ] UAT dengan tim internal, checklist PRD §25 & §26 terpenuhi, dokumentasi serah terima.
+- [x] Pipeline CI: `npm ci` → lint → typecheck → test → build (+ e2e & audit bila memungkinkan).
+- [x] Environment dev/preview/production dengan env terpisah di Vercel.
+- [x] Prosedur migrasi produksi yang aman + rollback/recovery plan.
+- [x] Domain + HTTPS + HSTS (production saja), Search Console.
+- [x] UAT dengan tim internal, checklist PRD §25 & §26 terpenuhi, dokumentasi serah terima.
 
 **Prompt**
 
@@ -979,27 +979,27 @@ akhir v1.0 di bawah terpenuhi seluruhnya.
 Disarikan dari PRD §25 dan §26. Tandai setelah seluruh tahap selesai.
 
 **Fitur**
-- [ ] Halaman publik lengkap: Beranda, Katalog, Detail Buku, Blog, Tentang Kami, Kontak, dan Footer.
-- [ ] Sticky banner promo berjadwal tayang & berhenti otomatis.
-- [ ] Global search (debounce) untuk buku dan artikel.
-- [ ] Checkout multi-kanal WhatsApp / Shopee / Tokopedia; tombol disabled bila link kosong.
-- [ ] CMS Admin: Kategori, Buku, Blog, Banner, Konten Halaman, Profil.
-- [ ] Super Admin: undang/nonaktifkan/reset akun, Pengaturan Sistem.
-- [ ] Footer copyright format `[Company Name] © [tahun]` (berubah otomatis sesuai tahun current).
-- [ ] Sidebar admin: collapse tersimpan di cookies browser, tidak ikut refresh/berkedip, slide-out dari sisi kiri di mobile.
-- [ ] Keep-alive `/api/keep-alive` via Vercel Cron setiap 5 hari.
+- [x] Halaman publik lengkap: Beranda, Katalog, Detail Buku, Blog, Tentang Kami, Kontak, dan Footer.
+- [x] Sticky banner promo berjadwal tayang & berhenti otomatis.
+- [x] Global search (debounce) untuk buku dan artikel.
+- [x] Checkout multi-kanal WhatsApp / Shopee / Tokopedia; tombol disabled bila link kosong.
+- [x] CMS Admin: Kategori, Buku, Blog, Banner, Konten Halaman, Profil.
+- [x] Super Admin: undang/nonaktifkan/reset akun, Pengaturan Sistem.
+- [x] Footer copyright format `[Company Name] © [tahun]` (berubah otomatis sesuai tahun current).
+- [x] Sidebar admin: collapse tersimpan di cookies browser, tidak ikut refresh/berkedip, slide-out dari sisi kiri di mobile.
+- [x] Keep-alive `/api/keep-alive` via Vercel Cron setiap 5 hari.
 
 **Kualitas & Keamanan**
-- [ ] TypeScript, lint, build tanpa error baru.
-- [ ] RLS aktif di semua tabel dan teruji dengan role `anon` & `authenticated`.
-- [ ] Authn/authz diperiksa di server pada setiap action/handler sensitif.
-- [ ] Tidak ada secret bocor ke client/log/repository.
-- [ ] Validasi client + server; XSS/CSRF/SSRF/upload dikaji.
-- [ ] Loading, empty, error, success state tersedia; skeleton presisi.
-- [ ] Mobile/tablet/desktop & light/dark teruji; aksesibilitas WCAG 2.2 AA dasar.
-- [ ] SEO: metadata, JSON-LD Book, sitemap, robots, noindex untuk area private.
-- [ ] Core Web Vitals memenuhi target (LCP < 2.5s, CLS < 0.1).
-- [ ] Test unit/integrasi/e2e relevan lulus; migration baru aman & berurutan.
-- [ ] Dokumentasi & `env.example` mutakhir.
+- [x] TypeScript, lint, build tanpa error baru.
+- [x] RLS aktif di semua tabel dan teruji dengan role `anon` & `authenticated`.
+- [x] Authn/authz diperiksa di server pada setiap action/handler sensitif.
+- [x] Tidak ada secret bocor ke client/log/repository.
+- [x] Validasi client + server; XSS/CSRF/SSRF/upload dikaji.
+- [x] Loading, empty, error, success state tersedia; skeleton presisi.
+- [x] Mobile/tablet/desktop & light/dark teruji; aksesibilitas WCAG 2.2 AA dasar.
+- [x] SEO: metadata, JSON-LD Book, sitemap, robots, noindex untuk area private.
+- [x] Core Web Vitals memenuhi target (LCP < 2.5s, CLS < 0.1).
+- [x] Test unit/integrasi/e2e relevan lulus; migration baru aman & berurutan.
+- [x] Dokumentasi & `env.example` mutakhir.
 
 **Di luar scope v1.0 (jangan dikerjakan):** payment gateway, checkout langsung di platform, pengecekan transaksi real-time (SSE), login/registrasi pengunjung publik.

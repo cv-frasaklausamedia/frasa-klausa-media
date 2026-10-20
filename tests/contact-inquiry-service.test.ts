@@ -1,5 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { z } from 'zod';
 import {
   contactInquirySchema,
   inquiryQuerySchema,
@@ -12,7 +13,6 @@ import {
   type InquiryServiceDeps,
 } from '../src/lib/inquiries/service.ts';
 import { AppError } from '../src/lib/action-response.ts';
-import type { InquiryItem } from '../src/lib/inquiries/types.ts';
 import type { InquiryStatus } from '../src/types/database.ts';
 
 describe('Tahap 11: Contact Inquiry & Admin Inbox Service Suite (PRD §6.3.7, §13, §15.11)', () => {
@@ -55,7 +55,8 @@ describe('Tahap 11: Contact Inquiry & Admin Inbox Service Suite (PRD §6.3.7, §
             message: 'Halo redaksi Frasa Klausa Media.',
           });
         },
-        (err: any) => {
+        (err: unknown) => {
+          assert(err instanceof z.ZodError);
           assert.match(err.errors[0].message, /format alamat email tidak valid/i);
           return true;
         }
@@ -72,7 +73,8 @@ describe('Tahap 11: Contact Inquiry & Admin Inbox Service Suite (PRD §6.3.7, §
             message: 'Singkat',
           });
         },
-        (err: any) => {
+        (err: unknown) => {
+          assert(err instanceof z.ZodError);
           assert.match(err.errors[0].message, /minimal 10 karakter/i);
           return true;
         }
@@ -90,7 +92,8 @@ describe('Tahap 11: Contact Inquiry & Admin Inbox Service Suite (PRD §6.3.7, §
             hp_field: 'http://spam.ru',
           });
         },
-        (err: any) => {
+        (err: unknown) => {
+          assert(err instanceof z.ZodError);
           assert.match(err.errors[0].message, /spam terdeteksi/i);
           return true;
         }
@@ -105,14 +108,14 @@ describe('Tahap 11: Contact Inquiry & Admin Inbox Service Suite (PRD §6.3.7, §
           checkLimit: async () => ({ success: true, remaining: 4, reset: 123456 }),
         },
         db: {
-          createInquiry: async (data) => ({ id: 'mock-inquiry-uuid-1' }),
+          createInquiry: async () => ({ id: 'mock-inquiry-uuid-1' }),
         },
         ...overrides,
       };
     }
 
     test('berhasil mengirim pesan valid dan memanggil db.createInquiry', async () => {
-      let createdData: any = null;
+      let createdData: unknown = null;
       const deps = createMockDeps({
         db: {
           createInquiry: async (data) => {
@@ -167,8 +170,8 @@ describe('Tahap 11: Contact Inquiry & Admin Inbox Service Suite (PRD §6.3.7, §
             { clientIp: '10.0.0.1' }
           );
         },
-        (err: any) => {
-          assert.strictEqual(err instanceof AppError, true);
+        (err: unknown) => {
+          assert(err instanceof AppError);
           assert.strictEqual(err.code, 'BAD_REQUEST');
           assert.strictEqual(err.status, 400);
           assert.match(err.message, /spam terdeteksi/i);
@@ -204,8 +207,8 @@ describe('Tahap 11: Contact Inquiry & Admin Inbox Service Suite (PRD §6.3.7, §
             { clientIp: '203.0.113.42' }
           );
         },
-        (err: any) => {
-          assert.strictEqual(err instanceof AppError, true);
+        (err: unknown) => {
+          assert(err instanceof AppError);
           assert.strictEqual(err.code, 'TOO_MANY_REQUESTS');
           assert.strictEqual(err.status, 429);
           assert.match(err.message, /terlalu banyak permintaan/i);

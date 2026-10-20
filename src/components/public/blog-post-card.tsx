@@ -96,9 +96,8 @@ export function BlogPostCard({
           <Link
             href={`/blog/${post.slug}`}
             className="text-primary font-medium hover:underline text-[11px]"
-            aria-label={`Baca artikel: ${post.title}`}
           >
-            Baca Artikel &rarr;
+            Baca Artikel <span className="sr-only">: {post.title}</span> &rarr;
           </Link>
         </div>
       </div>

@@ -133,9 +133,29 @@ describe('Tahap 12: SEO, Performa & Aksesibilitas Suite (PRD §10.7, §11, §16.
       updated_at: '2024-06-01T00:00:00Z',
     };
 
+    interface BookJsonLdShape {
+      '@context': string;
+      '@type': string;
+      name: string;
+      url: string;
+      inLanguage: string;
+      isbn: string | null;
+      numberOfPages: number | null;
+      datePublished: string;
+      image: string;
+      author: { '@type': string; name: string };
+      publisher: { '@type': string; name: string };
+      offers: {
+        '@type': string;
+        price: number;
+        priceCurrency: string;
+        availability: string;
+      };
+    }
+
     test('menghasilkan schema Book yang valid dengan harga promo efektif', () => {
       const baseUrl = 'https://frasaklausamedia.com';
-      const jsonLd = buildBookJsonLd(mockBook, baseUrl) as Record<string, any>;
+      const jsonLd = buildBookJsonLd(mockBook, baseUrl) as unknown as BookJsonLdShape;
 
       assert.strictEqual(jsonLd['@context'], 'https://schema.org');
       assert.strictEqual(jsonLd['@type'], 'Book');
@@ -166,7 +186,7 @@ describe('Tahap 12: SEO, Performa & Aksesibilitas Suite (PRD §10.7, §11, §16.
         price_promo: null,
       };
 
-      const jsonLd = buildBookJsonLd(bookWithoutPromo, 'https://frasaklausamedia.com') as Record<string, any>;
+      const jsonLd = buildBookJsonLd(bookWithoutPromo, 'https://frasaklausamedia.com') as unknown as BookJsonLdShape;
       assert.strictEqual(jsonLd.offers.price, 85000);
     });
   });
@@ -188,9 +208,35 @@ describe('Tahap 12: SEO, Performa & Aksesibilitas Suite (PRD §10.7, §11, §16.
       updated_at: '2024-05-11T12:00:00Z',
     };
 
+    interface ArticleJsonLdShape {
+      '@context': string;
+      '@type': string;
+      headline: string;
+      author: Array<{ name: string }>;
+      publisher: { name: string };
+      mainEntityOfPage: { '@id': string };
+    }
+
+    interface OrganizationJsonLdShape {
+      '@context': string;
+      '@type': string;
+      name: string;
+      legalName: string;
+      contactPoint: { telephone: string };
+      sameAs: string[];
+    }
+
+    interface BreadcrumbJsonLdShape {
+      '@type': string;
+      itemListElement: Array<{
+        position: number;
+        item: string;
+      }>;
+    }
+
     test('menghasilkan schema BlogPosting lengkap dengan penulis dan penerbit', () => {
       const baseUrl = 'https://frasaklausamedia.com';
-      const jsonLd = buildArticleJsonLd(mockPost, baseUrl) as Record<string, any>;
+      const jsonLd = buildArticleJsonLd(mockPost, baseUrl) as unknown as ArticleJsonLdShape;
 
       assert.strictEqual(jsonLd['@context'], 'https://schema.org');
       assert.strictEqual(jsonLd['@type'], 'BlogPosting');
@@ -202,7 +248,7 @@ describe('Tahap 12: SEO, Performa & Aksesibilitas Suite (PRD §10.7, §11, §16.
 
     test('menghasilkan schema Organization beranda dengan informasi resmi penerbit', () => {
       const baseUrl = 'https://frasaklausamedia.com';
-      const jsonLd = buildOrganizationJsonLd(baseUrl) as Record<string, any>;
+      const jsonLd = buildOrganizationJsonLd(baseUrl) as unknown as OrganizationJsonLdShape;
 
       assert.strictEqual(jsonLd['@context'], 'https://schema.org');
       assert.strictEqual(jsonLd['@type'], 'Organization');
@@ -221,7 +267,7 @@ describe('Tahap 12: SEO, Performa & Aksesibilitas Suite (PRD §10.7, §11, §16.
         { name: 'Buku A', url: '/buku/buku-a' },
       ];
 
-      const jsonLd = buildBreadcrumbJsonLd(breadcrumbs, baseUrl) as Record<string, any>;
+      const jsonLd = buildBreadcrumbJsonLd(breadcrumbs, baseUrl) as unknown as BreadcrumbJsonLdShape;
       assert.strictEqual(jsonLd['@type'], 'BreadcrumbList');
       assert.strictEqual(jsonLd.itemListElement.length, 3);
       assert.strictEqual(jsonLd.itemListElement[0].position, 1);

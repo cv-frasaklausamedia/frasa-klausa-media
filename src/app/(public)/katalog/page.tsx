@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { BookOpen, Sparkles, ChevronRight } from 'lucide-react';
+import { BookOpen, ChevronRight } from 'lucide-react';
 import { getPublicBooks, getBookCategoriesOptions } from '@/lib/books/data-access';
 import { publicCatalogQuerySchema } from '@/validations/book';
 import { BookCard } from '@/components/public/book-card';

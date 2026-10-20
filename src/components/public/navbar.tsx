@@ -92,9 +92,8 @@ export function Navbar() {
             type="button"
             onClick={() => setSearchOpen(true)}
             className="hidden sm:flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label="Buka pencarian global (Ctrl + K)"
           >
-            <Search className="h-3.5 w-3.5" />
+            <Search className="h-3.5 w-3.5" aria-hidden="true" />
             <span className="inline-block">Cari buku, artikel...</span>
             <kbd className="pointer-events-none rounded border bg-background px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
               Ctrl K

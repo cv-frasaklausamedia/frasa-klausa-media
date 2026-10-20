@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import type { InquiryStatus } from '../types/database.ts';
 
 export const INQUIRY_STATUSES = ['unread', 'replied', 'archived'] as const;
 

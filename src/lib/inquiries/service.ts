@@ -4,8 +4,6 @@ import type { InquiryStatus } from '../../types/database.ts';
 import {
   contactInquirySchema,
   updateInquiryStatusSchema,
-  type ContactInquiryInput,
-  type UpdateInquiryStatusInput,
   type ContactInquiryValues,
 } from '../../validations/inquiry.ts';
 import type { InquiryItem } from './types.ts';

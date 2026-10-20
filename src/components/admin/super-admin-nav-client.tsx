@@ -36,7 +36,7 @@ export function SuperAdminNavClient() {
   };
 
   const isItemActive = (href: string) => {
-    return pathname.startsWith(href);
+    return pathname === href || pathname.startsWith(href + '/');
   };
 
   return (

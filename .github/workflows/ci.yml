@@ -1,0 +1,94 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-and-build:
+    name: Quality Check, Unit Tests & Production Build
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      NEXT_PUBLIC_SUPABASE_URL: https://mock-supabase.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock-anon-key-min-20-chars
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock-service-role-key-min-20-chars
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      CRON_SECRET: mock-cron-secret-for-ci-build
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22.x LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Dependencies (Deterministic npm ci)
+        run: npm ci
+
+      - name: Run ESLint (Strict Code Quality)
+        run: npm run lint
+
+      - name: Run TypeScript Typecheck (tsc --noEmit)
+        run: npm run typecheck
+
+      - name: Run Dependency Security Audit
+        run: npm audit --audit-level=critical
+
+      - name: Run Unit & Integration Tests (457 test suites)
+        run: npm test
+
+      - name: Production Build Compilation (Next.js 16 Turbopack)
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+  e2e-testing:
+    name: End-to-End Testing (Playwright)
+    runs-on: ubuntu-latest
+    needs: quality-and-build
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://mock-supabase.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock-anon-key-min-20-chars
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock-service-role-key-min-20-chars
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      CRON_SECRET: mock-cron-secret-for-ci-build
+      PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22.x LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium Browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright Tests (Desktop & Mobile Chrome)
+        run: npx playwright test --project=chromium
+
+      - name: Upload Playwright Report on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

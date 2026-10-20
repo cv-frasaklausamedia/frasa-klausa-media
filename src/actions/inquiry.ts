@@ -20,7 +20,6 @@ import {
   type InquiryServiceDeps,
 } from '@/lib/inquiries/service';
 import type { ContactInquiryInput, UpdateInquiryStatusInput } from '@/validations/inquiry';
-import type { InquiryStatus } from '@/types/database';
 import { logger } from '@/lib/logger';
 
 function getRealInquiryServiceDeps(): InquiryServiceDeps {

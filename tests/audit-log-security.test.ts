@@ -60,11 +60,14 @@ describe('Audit Log Security & Sanitization Suite (Tahap 8 - PRD §16.7)', () =>
 
       const sanitized = sanitizeAuditMetadata(nestedMetadata);
 
-      assert.equal((sanitized.user as any).email, 'target@frasaklausa.id');
-      assert.equal((sanitized.user as any).api_key, '[REDACTED]');
-      assert.equal((sanitized.items as any[])[0].secret, '[REDACTED]');
-      assert.equal((sanitized.items as any[])[0].type, 'auth_method');
-      assert.equal((sanitized.items as any[])[1].value, 'target@frasaklausa.id');
+      const userObj = sanitized.user as Record<string, unknown>;
+      const itemsList = sanitized.items as Array<Record<string, unknown>>;
+
+      assert.equal(userObj.email, 'target@frasaklausa.id');
+      assert.equal(userObj.api_key, '[REDACTED]');
+      assert.equal(itemsList[0].secret, '[REDACTED]');
+      assert.equal(itemsList[0].type, 'auth_method');
+      assert.equal(itemsList[1].value, 'target@frasaklausa.id');
       assert.equal(sanitized.credentials, '[REDACTED]');
     });
 
@@ -113,8 +116,9 @@ describe('Audit Log Security & Sanitization Suite (Tahap 8 - PRD §16.7)', () =>
       assert.equal(finalAuditLog.targetId, 'user-789');
       assert.equal(finalAuditLog.status, 'success');
       assert.equal(finalAuditLog.ipAddress, '192.168.1.10');
-      assert.equal((finalAuditLog.metadata as any).password, '[REDACTED]');
-      assert.equal((finalAuditLog.metadata as any).email, 'editor@frasaklausa.id');
+      const finalMetadata = finalAuditLog.metadata as Record<string, unknown>;
+      assert.equal(finalMetadata.password, '[REDACTED]');
+      assert.equal(finalMetadata.email, 'editor@frasaklausa.id');
     });
 
     it('simulasi immutability append-only: menolak update/delete pada log audit', () => {
@@ -129,21 +133,21 @@ describe('Audit Log Security & Sanitization Suite (Tahap 8 - PRD §16.7)', () =>
       ];
 
       // Simulasi PostgreSQL Rule: DO INSTEAD NOTHING pada UPDATE
-      function attemptUpdate(id: string, newAction: string): AuditRow[] {
+      function attemptUpdate(): AuditRow[] {
         // Rule: DO INSTEAD NOTHING -> tabel tetap tidak berubah
         return auditTable;
       }
 
       // Simulasi PostgreSQL Rule: DO INSTEAD NOTHING pada DELETE
-      function attemptDelete(id: string): AuditRow[] {
+      function attemptDelete(): AuditRow[] {
         // Rule: DO INSTEAD NOTHING -> baris tidak dihapus
         return auditTable;
       }
 
-      const afterUpdate = attemptUpdate('log-1', 'tampered.action');
+      const afterUpdate = attemptUpdate();
       assert.equal(afterUpdate[0].action, 'user.create');
 
-      const afterDelete = attemptDelete('log-1');
+      const afterDelete = attemptDelete();
       assert.equal(afterDelete.length, 1);
     });
   });

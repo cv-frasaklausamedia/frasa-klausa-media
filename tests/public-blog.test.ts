@@ -37,7 +37,9 @@ describe('Tahap 11: Public Blog & Typography Suite (PRD §6.3.5 & US-06)', () =>
       const validSort = publicBlogQuerySchema.parse({ sort: 'title_asc' });
       assert.strictEqual(validSort.sort, 'title_asc');
 
-      const illegalSort = publicBlogQuerySchema.parse({ sort: 'hacked_sort; DROP TABLE posts;' as any });
+      const illegalSort = publicBlogQuerySchema.parse({
+        sort: 'hacked_sort; DROP TABLE posts;' as unknown as 'title_asc',
+      });
       assert.strictEqual(illegalSort.sort, 'published_at_desc');
     });
 

@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { ShoppingBag, ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { buildWhatsAppUrl, formatRupiah } from '@/validations/book';

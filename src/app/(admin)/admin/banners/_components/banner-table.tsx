@@ -13,11 +13,9 @@ import {
   Calendar,
   Clock,
   Loader2,
-  CheckCircle2,
   AlertTriangle,
 } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -72,8 +70,6 @@ export function BannerTable({ initialData }: BannerTableProps) {
 
   const currentSearch = searchParams.get('search') || '';
   const currentStatus = searchParams.get('status') || 'all';
-  const currentPage = Number(searchParams.get('page') || '1');
-  const currentPageSize = Number(searchParams.get('pageSize') || '10');
 
   const [searchInput, setSearchInput] = React.useState(currentSearch);
   const [editingBanner, setEditingBanner] = React.useState<BannerWithComputedStatus | null>(null);

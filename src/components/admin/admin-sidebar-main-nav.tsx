@@ -36,8 +36,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
@@ -92,7 +90,7 @@ const mainNavItems: NavItem[] = [
     icon: FileText,
     children: [
       {
-        title: 'Semua Artikel',
+        title: 'Semua Blog',
         href: '/admin/blog',
         icon: FileText,
       },
@@ -135,16 +133,25 @@ interface CollapsibleNavGroupProps {
   onNavigate: () => void;
 }
 
-function CollapsibleNavGroup({ item, pathname, onNavigate }: CollapsibleNavGroupProps) {
-  const isAnyChildActive = item.children.some((child) => pathname.startsWith(child.href));
-  const [isOpen, setIsOpen] = React.useState(isAnyChildActive);
+function isRouteActive(pathname: string, href: string): boolean {
+  if (href === '/admin') {
+    return pathname === '/admin';
+  }
+  return pathname === href || pathname.startsWith(href + '/');
+}
 
-  // Otomatis buka accordion jika pengguna membuka salah satu rute anak
-  React.useEffect(() => {
-    if (isAnyChildActive) {
-      setIsOpen(true);
-    }
-  }, [isAnyChildActive]);
+function CollapsibleNavGroup({ item, pathname, onNavigate }: CollapsibleNavGroupProps) {
+  const isAnyChildActive = item.children.some((child) => isRouteActive(pathname, child.href));
+  const [isOpen, setIsOpen] = React.useState(isAnyChildActive);
+  const [prevActive, setPrevActive] = React.useState(isAnyChildActive);
+
+  // Otomatis buka accordion saat rute anak aktif berpindah (penyesuaian state render murni tanpa cascading render)
+  if (isAnyChildActive && !prevActive) {
+    setPrevActive(true);
+    setIsOpen(true);
+  } else if (!isAnyChildActive && prevActive) {
+    setPrevActive(false);
+  }
 
   const Icon = item.icon;
 
@@ -178,7 +185,7 @@ function CollapsibleNavGroup({ item, pathname, onNavigate }: CollapsibleNavGroup
             </div>
             <div className="space-y-0.5">
               {item.children.map((child) => {
-                const childActive = pathname.startsWith(child.href);
+                const childActive = isRouteActive(pathname, child.href);
                 const ChildIcon = child.icon;
                 return (
                   <DropdownMenuItem key={child.href} asChild>
@@ -238,7 +245,7 @@ function CollapsibleNavGroup({ item, pathname, onNavigate }: CollapsibleNavGroup
           <CollapsibleContent className="overflow-hidden transition-all duration-200">
             <SidebarMenuSub className="my-1 ml-3.5 border-l border-sidebar-border/70 pl-2 space-y-0.5">
               {item.children.map((child) => {
-                const childActive = pathname.startsWith(child.href);
+                const childActive = isRouteActive(pathname, child.href);
                 const ChildIcon = child.icon;
                 return (
                   <SidebarMenuSubItem key={child.href}>
@@ -280,12 +287,7 @@ export function AdminSidebarMainNav() {
     setOpenMobile(false);
   };
 
-  const isSingleItemActive = (href: string) => {
-    if (href === '/admin') {
-      return pathname === '/admin';
-    }
-    return pathname.startsWith(href);
-  };
+  const isSingleItemActive = (href: string) => isRouteActive(pathname, href);
 
   return (
     <SidebarGroup>

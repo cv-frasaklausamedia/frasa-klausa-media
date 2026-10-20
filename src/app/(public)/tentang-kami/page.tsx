@@ -10,7 +10,6 @@ import {
   Award,
   CheckCircle2,
   ArrowRight,
-  HeartHandshake,
   Mail,
 } from 'lucide-react';
 
@@ -47,10 +46,7 @@ export const metadata: Metadata = {
 
 async function AboutContent() {
   await connection();
-  const [about, contact] = await Promise.all([
-    getSiteContent('about'),
-    getSiteContent('contact'),
-  ]);
+  const about = await getSiteContent('about');
 
   const sanitizedHistory = sanitizeSiteNarrativeHtml(about.history);
 
