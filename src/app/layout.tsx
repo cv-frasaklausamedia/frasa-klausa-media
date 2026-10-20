@@ -1,9 +1,10 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Plus_Jakarta_Sans, Newsreader } from 'next/font/google';
 import './globals.css';
 import { AppProviders } from '@/providers/app-providers';
 import { Toaster } from 'sonner';
 import { getFallbackOpenGraphImage } from '@/lib/seo/open-graph';
+import { ServiceWorkerRegister } from '@/components/pwa/service-worker-register';
 
 const fontSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -21,6 +22,16 @@ const fontSerif = Newsreader({
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://frasaklausamedia.com';
 const defaultOpenGraphImage = getFallbackOpenGraphImage('Frasa Klausa Media', appUrl);
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#09090b' },
+  ],
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
@@ -30,6 +41,15 @@ export const metadata: Metadata = {
   description:
     'Website resmi dan katalog buku Frasa Klausa Media. Mewujudkan Naskah Menjadi Buku. Temukan novel, puisi, esai, dan karya sastra Indonesia berkualitas tinggi.',
   applicationName: 'Frasa Klausa Media',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Frasa Klausa',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  manifest: '/manifest.webmanifest',
   authors: [{ name: 'Frasa Klausa Media', url: appUrl }],
   creator: 'Frasa Klausa Media',
   publisher: 'Frasa Klausa Media',
@@ -74,8 +94,14 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: '/favicon.ico',
-    apple: '/logo/logo.png',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icons/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
 };
 
@@ -97,6 +123,7 @@ export default function RootLayout({
         <AppProviders>
           {children}
           <Toaster richColors position="top-right" closeButton />
+          <ServiceWorkerRegister />
         </AppProviders>
       </body>
     </html>
