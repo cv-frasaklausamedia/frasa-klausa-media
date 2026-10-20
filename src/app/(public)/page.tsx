@@ -86,7 +86,7 @@ async function HomePageContent() {
                 className="gap-1.5 px-3 py-1 text-xs border-primary/30 text-primary shadow-2xs inline-flex"
               >
                 <Sparkles className="h-3.5 w-3.5" />
-                Penerbitan Buku & Media Literasi
+                {hero?.badge || 'Penerbit Buku Berkualitas & Independen'}
               </Badge>
 
               <h1 className="text-4xl font-serif font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl leading-[1.15]">
@@ -350,7 +350,7 @@ async function HomePageContent() {
                   <div className="flex h-full w-full flex-col items-center justify-center bg-muted/40 p-6 text-center text-muted-foreground">
                     <BookOpen className="h-12 w-12 opacity-60 text-primary mb-3" />
                     <p className="font-serif italic text-sm text-foreground/90 max-w-xs">
-                      &ldquo;Mendedikasikan diri untuk karya sastra yang abadi dan mencerahkan.&rdquo;
+                      &ldquo;{about.subtitle || 'Mewujudkan Naskah Menjadi Buku'}&rdquo;
                     </p>
                   </div>
                 </div>

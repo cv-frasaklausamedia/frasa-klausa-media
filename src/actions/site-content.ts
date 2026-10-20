@@ -145,7 +145,31 @@ export async function saveContactContentAction(
 ): Promise<ActionResponse<ContactContentPayload>> {
   try {
     const deps = await getRealSiteContentServiceDeps();
-    return await executeSaveContactContent(input, deps);
+    const result = await executeSaveContactContent(input, deps);
+
+    // Sinkronkan ke system_settings jika pemanggilan berhasil
+    if (result.ok) {
+      try {
+        const { getSystemSettingsRecord, updateSystemSettingsRecord } = await import(
+          '@/lib/settings/data-access'
+        );
+        const currentSettings = await getSystemSettingsRecord();
+        await updateSystemSettingsRecord('general', {
+          ...currentSettings.general,
+          site_name: input.company_name,
+          site_tagline: input.tagline,
+          contact_email: input.email,
+          contact_phone: input.phone,
+          contact_whatsapp: input.whatsapp,
+          office_address: input.address,
+        });
+        revalidatePath('/admin/settings');
+      } catch (syncErr) {
+        console.warn('[saveContactContentAction] Gagal sinkronisasi ke system_settings:', syncErr);
+      }
+    }
+
+    return result;
   } catch (error) {
     return handleActionError(error);
   }

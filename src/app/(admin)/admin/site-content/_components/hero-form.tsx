@@ -29,6 +29,7 @@ import {
   uploadSiteImageAction,
   cleanupSiteImagesAction,
 } from '@/actions/site-content';
+import { DEFAULT_HERO_CONTENT } from '@/lib/site-content/defaults';
 import type { HeroContentPayload } from '@/types';
 
 interface HeroFormProps {
@@ -43,14 +44,14 @@ export function HeroForm({ initialData }: HeroFormProps) {
   const form = useForm<HeroContentValues>({
     resolver: zodResolver(heroContentSchema),
     defaultValues: {
-      badge: initialData.badge || '',
-      headline: initialData.headline || '',
-      subheadline: initialData.subheadline || '',
-      primary_cta_label: initialData.primary_cta_label || 'Jelajahi Katalog Buku',
-      primary_cta_url: initialData.primary_cta_url || '/katalog',
-      secondary_cta_label: initialData.secondary_cta_label || '',
-      secondary_cta_url: initialData.secondary_cta_url || '',
-      cover_image_url: initialData.cover_image_url || '',
+      badge: initialData.badge || DEFAULT_HERO_CONTENT.badge,
+      headline: initialData.headline || DEFAULT_HERO_CONTENT.headline,
+      subheadline: initialData.subheadline || DEFAULT_HERO_CONTENT.subheadline,
+      primary_cta_label: initialData.primary_cta_label || DEFAULT_HERO_CONTENT.primary_cta_label,
+      primary_cta_url: initialData.primary_cta_url || DEFAULT_HERO_CONTENT.primary_cta_url,
+      secondary_cta_label: initialData.secondary_cta_label || DEFAULT_HERO_CONTENT.secondary_cta_label,
+      secondary_cta_url: initialData.secondary_cta_url || DEFAULT_HERO_CONTENT.secondary_cta_url,
+      cover_image_url: initialData.cover_image_url || DEFAULT_HERO_CONTENT.cover_image_url,
     },
   });
 

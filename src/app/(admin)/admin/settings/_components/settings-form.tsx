@@ -132,10 +132,18 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
           <TabsContent value="general" className="mt-4 space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Identitas Situs & Kontak Resmi</CardTitle>
-                <CardDescription>
-                  Informasi ini ditampilkan pada tajuk publik, footer situs, dan halaman kontak resmi.
-                </CardDescription>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <CardTitle className="text-lg">Identitas Situs & Kontak Resmi</CardTitle>
+                    <CardDescription>
+                      Informasi ini tersinkronisasi otomatis dengan tajuk publik, footer situs, dan halaman kontak resmi.
+                    </CardDescription>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 self-start sm:self-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-primary/10 text-primary border border-primary/20">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Sinkron dengan Konten Publik
+                  </span>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -161,7 +169,7 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
                         <FormLabel>Slogan / Tagline</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Penerbit Buku Berkualitas & Ruang Literasi"
+                            placeholder="Mewujudkan Naskah Menjadi Buku"
                             {...field}
                           />
                         </FormControl>
@@ -230,7 +238,7 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
                       <FormLabel>Alamat Kantor Operasional</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Alamat fisik studio penerbitan dan sekretariat..."
+                          placeholder="Jl. Literasi No. 42, RT 03 / RW 05, Jakarta Timur, DKI Jakarta 13420"
                           className="resize-y min-h-[70px]"
                           {...field}
                         />
@@ -248,7 +256,7 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
                       <FormLabel>Deskripsi Meta SEO Default</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Deskripsi ringkas yang tampil pada mesin pencari Google saat membagikan tautan beranda..."
+                          placeholder="Website resmi dan katalog buku Frasa Klausa Media. Mewujudkan Naskah Menjadi Buku. Temukan novel, puisi, esai, dan karya sastra Indonesia berkualitas tinggi."
                           className="resize-y min-h-[70px]"
                           {...field}
                         />

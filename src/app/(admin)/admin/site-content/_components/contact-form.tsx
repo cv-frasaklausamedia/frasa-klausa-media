@@ -17,6 +17,7 @@ import {
   type ContactContentValues,
 } from '@/validations/site-content';
 import { saveContactContentAction } from '@/actions/site-content';
+import { DEFAULT_CONTACT_CONTENT } from '@/lib/site-content/defaults';
 import type { ContactContentPayload } from '@/types';
 
 interface ContactFormProps {
@@ -27,14 +28,14 @@ export function ContactForm({ initialData }: ContactFormProps) {
   const form = useForm<ContactContentValues>({
     resolver: zodResolver(contactContentSchema),
     defaultValues: {
-      company_name: initialData.company_name || 'Frasa Klausa Media',
-      tagline: initialData.tagline || 'Mewujudkan Naskah Menjadi Buku',
-      email: initialData.email || 'frasaklausamedia@gmail.com',
-      phone: initialData.phone || '0813-8060-4256',
-      whatsapp: initialData.whatsapp || '0813-8060-4256',
-      address: initialData.address || '',
-      operating_hours: initialData.operating_hours || 'Senin – Jumat: 09.00 – 17.00 WIB',
-      maps_embed_url: initialData.maps_embed_url || '',
+      company_name: initialData.company_name || DEFAULT_CONTACT_CONTENT.company_name,
+      tagline: initialData.tagline || DEFAULT_CONTACT_CONTENT.tagline,
+      email: initialData.email || DEFAULT_CONTACT_CONTENT.email,
+      phone: initialData.phone || DEFAULT_CONTACT_CONTENT.phone,
+      whatsapp: initialData.whatsapp || DEFAULT_CONTACT_CONTENT.whatsapp,
+      address: initialData.address || DEFAULT_CONTACT_CONTENT.address,
+      operating_hours: initialData.operating_hours || DEFAULT_CONTACT_CONTENT.operating_hours,
+      maps_embed_url: initialData.maps_embed_url || DEFAULT_CONTACT_CONTENT.maps_embed_url,
     },
   });
 

@@ -49,6 +49,7 @@ import {
   type SocialContentValues,
 } from '@/validations/site-content';
 import { saveSocialContentAction } from '@/actions/site-content';
+import { DEFAULT_SOCIAL_CONTENT } from '@/lib/site-content/defaults';
 import type { SocialContentPayload } from '@/types';
 
 interface SocialFormProps {
@@ -59,13 +60,13 @@ export function SocialForm({ initialData }: SocialFormProps) {
   const form = useForm<SocialContentValues>({
     resolver: zodResolver(socialContentSchema),
     defaultValues: {
-      instagram: initialData.instagram || '',
-      facebook: initialData.facebook || '',
-      tiktok: initialData.tiktok || '',
-      twitter: initialData.twitter || '',
-      shopee: initialData.shopee || '',
-      tokopedia: initialData.tokopedia || '',
-      youtube: initialData.youtube || '',
+      instagram: initialData.instagram || DEFAULT_SOCIAL_CONTENT.instagram,
+      facebook: initialData.facebook || DEFAULT_SOCIAL_CONTENT.facebook,
+      tiktok: initialData.tiktok || DEFAULT_SOCIAL_CONTENT.tiktok,
+      twitter: initialData.twitter || DEFAULT_SOCIAL_CONTENT.twitter,
+      shopee: initialData.shopee || DEFAULT_SOCIAL_CONTENT.shopee,
+      tokopedia: initialData.tokopedia || DEFAULT_SOCIAL_CONTENT.tokopedia,
+      youtube: initialData.youtube || DEFAULT_SOCIAL_CONTENT.youtube,
     },
   });
 

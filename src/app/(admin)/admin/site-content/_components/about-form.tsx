@@ -17,6 +17,7 @@ import {
   type AboutContentValues,
 } from '@/validations/site-content';
 import { saveAboutContentAction } from '@/actions/site-content';
+import { DEFAULT_ABOUT_CONTENT } from '@/lib/site-content/defaults';
 import type { AboutContentPayload } from '@/types';
 
 interface AboutFormProps {
@@ -27,12 +28,18 @@ export function AboutForm({ initialData }: AboutFormProps) {
   const form = useForm<AboutContentValues>({
     resolver: zodResolver(aboutContentSchema),
     defaultValues: {
-      title: initialData.title || 'Tentang Frasa Klausa Media',
-      subtitle: initialData.subtitle || 'Mewujudkan Naskah Menjadi Buku',
-      vision: initialData.vision || '',
-      mission: initialData.mission && initialData.mission.length > 0 ? initialData.mission : [''],
-      history: initialData.history || '',
-      values: initialData.values || [],
+      title: initialData.title || DEFAULT_ABOUT_CONTENT.title,
+      subtitle: initialData.subtitle || DEFAULT_ABOUT_CONTENT.subtitle,
+      vision: initialData.vision || DEFAULT_ABOUT_CONTENT.vision,
+      mission:
+        initialData.mission && initialData.mission.length > 0 && initialData.mission[0] !== ''
+          ? initialData.mission
+          : DEFAULT_ABOUT_CONTENT.mission,
+      history: initialData.history || DEFAULT_ABOUT_CONTENT.history,
+      values:
+        initialData.values && initialData.values.length > 0
+          ? initialData.values
+          : DEFAULT_ABOUT_CONTENT.values,
     },
   });
 

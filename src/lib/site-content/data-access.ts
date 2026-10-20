@@ -28,11 +28,18 @@ export async function getSiteContentRecord<K extends SiteContentKey>(
 
     const payload = data.payload as unknown as Record<string, unknown>;
 
-    // Lakukan shallow merge dengan fallback agar properti baru tetap memiliki nilai default
-    return {
-      ...fallback,
-      ...payload,
-    } as SiteContentPayloadMap[K];
+    // Lakukan non-empty merge dengan fallback agar properti string kosong/array kosong tetap memiliki nilai default resmi
+    const merged: Record<string, unknown> = { ...fallback };
+    for (const [k, v] of Object.entries(payload)) {
+      if (v !== undefined && v !== null && v !== '') {
+        if (Array.isArray(v) && v.length === 0) {
+          continue;
+        }
+        merged[k] = v;
+      }
+    }
+
+    return merged as unknown as SiteContentPayloadMap[K];
   } catch (err) {
     console.error(`[getSiteContentRecord] Gagal mengambil konten untuk key '${key}':`, err);
     return fallback;

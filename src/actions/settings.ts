@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { requireSuperAdmin } from '@/lib/auth';
 import { getClientIp } from '@/lib/rate-limit';
 import { recordAuditLog } from '@/lib/audit/logger';
@@ -8,6 +8,10 @@ import {
   getSystemSettingsRecord,
   updateSystemSettingsRecord,
 } from '@/lib/settings/data-access';
+import {
+  getSiteContentRecord,
+  upsertSiteContentRecord,
+} from '@/lib/site-content/data-access';
 import {
   executeSaveSettings,
   type SettingsServiceDeps,
@@ -31,6 +35,13 @@ function getRealSettingsServiceDeps(): SettingsServiceDeps {
     db: {
       getSettings: () => getSystemSettingsRecord(),
       updateSettings: (key, value) => updateSystemSettingsRecord(key, value),
+      syncContactContent: async (contactPartial) => {
+        const currentContact = await getSiteContentRecord('contact');
+        await upsertSiteContentRecord('contact', {
+          ...currentContact,
+          ...contactPartial,
+        });
+      },
     },
     audit: {
       record: (entry) => recordAuditLog(entry),
@@ -64,7 +75,10 @@ export async function saveSettingsAction(
 
     // Revalidasi halaman admin dan layout publik
     revalidatePath('/admin/settings');
+    revalidatePath('/admin/site-content');
+    revalidatePath('/kontak');
     revalidatePath('/', 'layout');
+    revalidateTag('site-content-contact', { expire: 0 });
 
     return actionSuccess({
       message: result.message,

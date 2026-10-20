@@ -20,26 +20,26 @@ export async function createInquiryRecord(
   data: Omit<ContactInquiryValues, 'hp_field'>
 ): Promise<{ id: string }> {
   const supabase = createPublicClient();
+  const id = crypto.randomUUID();
 
-  const { data: inserted, error } = await supabase
+  const { error } = await supabase
     .from('contact_inquiries')
     .insert({
+      id,
       name: data.name,
       email: data.email,
       phone: data.phone ?? null,
       subject: data.subject,
       message: data.message,
       status: 'unread',
-    })
-    .select('id')
-    .single();
+    });
 
-  if (error || !inserted) {
+  if (error) {
     console.error('[createInquiryRecord] Gagal menyimpan pesan:', error);
-    throw new Error(error?.message || 'Gagal menyimpan pesan kontak ke basis data.');
+    throw error;
   }
 
-  return { id: inserted.id };
+  return { id };
 }
 
 /**
