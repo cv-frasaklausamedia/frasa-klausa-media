@@ -10,6 +10,7 @@ import { Pagination } from '@/components/public/pagination';
 import { JsonLd } from '@/components/public/json-ld';
 import { buildBreadcrumbJsonLd } from '@/lib/seo/json-ld';
 import { OFFICIAL_IDENTITY } from '@/constants';
+import { getFallbackOpenGraphImage } from '@/lib/seo/open-graph';
 
 import { Suspense } from 'react';
 import { connection } from 'next/server';
@@ -43,6 +44,7 @@ export async function generateMetadata({
     category.seo_description ||
     category.description ||
     `Temukan seluruh buku berkualitas kategori ${category.name} terbitan Frasa Klausa Media.`;
+  const image = getFallbackOpenGraphImage(category.name);
 
   return {
     title,
@@ -55,13 +57,13 @@ export async function generateMetadata({
       url: `/kategori/${slug}`,
       title,
       description,
-      images: [{ url: '/logo/logo-landscape.jpg', width: 1200, height: 630, alt: category.name }],
+      images: [image],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: ['/logo/logo-landscape.jpg'],
+      images: [image.url],
     },
     robots: isFiltered
       ? { index: false, follow: true }

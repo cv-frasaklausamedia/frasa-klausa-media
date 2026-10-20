@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, Newsreader } from 'next/font/google';
 import './globals.css';
 import { AppProviders } from '@/providers/app-providers';
 import { Toaster } from 'sonner';
+import { getFallbackOpenGraphImage } from '@/lib/seo/open-graph';
 
 const fontSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -18,6 +19,7 @@ const fontSerif = Newsreader({
 });
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://frasaklausamedia.com';
+const defaultOpenGraphImage = getFallbackOpenGraphImage('Frasa Klausa Media', appUrl);
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
@@ -51,21 +53,14 @@ export const metadata: Metadata = {
     title: 'Frasa Klausa Media — Penerbit Buku & Media Literasi',
     description:
       'Platform penerbitan literasi modern dan toko buku resmi Frasa Klausa Media. Mewujudkan Naskah Menjadi Buku.',
-    images: [
-      {
-        url: '/logo/logo-landscape.jpg',
-        width: 1200,
-        height: 630,
-        alt: 'Frasa Klausa Media',
-      },
-    ],
+    images: [defaultOpenGraphImage],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Frasa Klausa Media — Penerbit Buku & Media Literasi',
     description:
       'Platform penerbitan literasi modern dan toko buku resmi Frasa Klausa Media. Mewujudkan Naskah Menjadi Buku.',
-    images: ['/logo/logo-landscape.jpg'],
+    images: [defaultOpenGraphImage.url],
   },
   robots: {
     index: true,

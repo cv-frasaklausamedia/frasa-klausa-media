@@ -12,6 +12,7 @@ import { OFFICIAL_IDENTITY } from '@/constants';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { getFallbackOpenGraphImage } from '@/lib/seo/open-graph';
 import BlogLoadingFallback from './loading';
 
 interface BlogPageProps {
@@ -37,6 +38,7 @@ export async function generateMetadata({ searchParams }: BlogPageProps): Promise
     : `Blog & Kabar Literasi | ${OFFICIAL_IDENTITY.COMPANY_NAME}`;
   const description =
     'Kumpulan artikel sastra, wawasan penerbitan buku, tips menulis, dan kabar kegiatan literasi terkini dari Frasa Klausa Media.';
+  const image = getFallbackOpenGraphImage('Blog Frasa Klausa Media');
 
   return {
     title,
@@ -49,13 +51,13 @@ export async function generateMetadata({ searchParams }: BlogPageProps): Promise
       url: '/blog',
       title,
       description,
-      images: [{ url: '/logo/logo-landscape.jpg', width: 1200, height: 630, alt: 'Blog Frasa Klausa Media' }],
+      images: [image],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: ['/logo/logo-landscape.jpg'],
+      images: [image.url],
     },
     robots: isFiltered
       ? { index: false, follow: true }

@@ -15,6 +15,7 @@ import { ShareButtons } from '@/components/public/share-buttons';
 import { BlogPostCard } from '@/components/public/blog-post-card';
 import { JsonLd } from '@/components/public/json-ld';
 import { buildArticleJsonLd, buildBreadcrumbJsonLd } from '@/lib/seo/json-ld';
+import { getOpenGraphImage } from '@/lib/seo/open-graph';
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
@@ -32,6 +33,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 
   const title = post.seo_title || post.title;
   const description = post.seo_description || post.excerpt;
+  const image = getOpenGraphImage({ sourceUrl: post.cover_url, alt: post.title });
 
   return {
     title: `${title} | Blog ${OFFICIAL_IDENTITY.COMPANY_NAME}`,
@@ -46,15 +48,13 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
       description,
       publishedTime: post.published_at || undefined,
       authors: [post.author_name],
-      images: post.cover_url
-        ? [{ url: post.cover_url, alt: post.title }]
-        : [{ url: '/logo/logo-landscape.jpg', width: 1200, height: 630, alt: OFFICIAL_IDENTITY.COMPANY_NAME }],
+      images: [image],
     },
     twitter: {
       card: 'summary_large_image',
       title: `${title} | Blog ${OFFICIAL_IDENTITY.COMPANY_NAME}`,
       description,
-      images: post.cover_url ? [post.cover_url] : ['/logo/logo-landscape.jpg'],
+      images: [image.url],
     },
   };
 }

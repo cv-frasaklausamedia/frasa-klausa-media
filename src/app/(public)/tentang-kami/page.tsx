@@ -20,6 +20,9 @@ import { OFFICIAL_IDENTITY } from '@/constants';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import AboutLoadingFallback from './loading';
+import { getFallbackOpenGraphImage } from '@/lib/seo/open-graph';
+
+const openGraphImage = getFallbackOpenGraphImage('Tentang Frasa Klausa Media');
 
 export const metadata: Metadata = {
   title: `Tentang Kami | ${OFFICIAL_IDENTITY.COMPANY_NAME}`,
@@ -34,14 +37,14 @@ export const metadata: Metadata = {
     title: `Tentang Kami | ${OFFICIAL_IDENTITY.COMPANY_NAME}`,
     description:
       'Mengenal visi, misi, sejarah, dan nilai-nilai penerbitan buku Frasa Klausa Media — Mewujudkan naskah bermutu menjadi karya nyata bagi kemajuan literasi bangsa.',
-    images: [{ url: '/logo/logo-landscape.jpg', width: 1200, height: 630, alt: 'Tentang Frasa Klausa Media' }],
+    images: [openGraphImage],
   },
   twitter: {
     card: 'summary_large_image',
     title: `Tentang Kami | ${OFFICIAL_IDENTITY.COMPANY_NAME}`,
     description:
       'Mengenal visi, misi, sejarah, dan nilai-nilai penerbitan buku Frasa Klausa Media — Mewujudkan naskah bermutu menjadi karya nyata bagi kemajuan literasi bangsa.',
-    images: ['/logo/logo-landscape.jpg'],
+    images: [openGraphImage.url],
   },
 };
 

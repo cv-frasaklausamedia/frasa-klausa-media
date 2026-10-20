@@ -8,6 +8,7 @@ import { KatalogFilterBar } from '@/components/public/katalog-filter-bar';
 import { KatalogSortSelect } from '@/components/public/katalog-sort-select';
 import { Pagination } from '@/components/public/pagination';
 import { OFFICIAL_IDENTITY } from '@/constants';
+import { getFallbackOpenGraphImage } from '@/lib/seo/open-graph';
 
 import { Suspense } from 'react';
 import { connection } from 'next/server';
@@ -42,6 +43,7 @@ export async function generateMetadata({ searchParams }: KatalogPageProps): Prom
   const description = categoryLabel
     ? `Jelajahi karya sastra dan buku berkualitas kategori ${categoryLabel} terbitan Frasa Klausa Media.`
     : 'Jelajahi karya sastra, novel, antologi puisi, dan buku berkualitas terbitan Frasa Klausa Media dengan filter kategori dan rentang harga.';
+  const image = getFallbackOpenGraphImage('Katalog Buku Frasa Klausa Media');
 
   return {
     title,
@@ -54,13 +56,13 @@ export async function generateMetadata({ searchParams }: KatalogPageProps): Prom
       url: '/katalog',
       title,
       description,
-      images: [{ url: '/logo/logo-landscape.jpg', width: 1200, height: 630, alt: 'Katalog Buku Frasa Klausa Media' }],
+      images: [image],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: ['/logo/logo-landscape.jpg'],
+      images: [image.url],
     },
     robots: isFiltered
       ? { index: false, follow: true }

@@ -13,33 +13,36 @@ import { getPopularBookCategories } from '@/lib/categories/data-access';
 import { getPublicLatestPosts } from '@/lib/posts/data-access';
 import { OFFICIAL_IDENTITY } from '@/constants';
 import { formatDateIndo } from '@/lib/utils';
+import { getOpenGraphImage } from '@/lib/seo/open-graph';
 
 import { Suspense } from 'react';
 import { connection } from 'next/server';
 
-export const metadata: Metadata = {
-  title: `${OFFICIAL_IDENTITY.COMPANY_NAME} — Penerbit Buku & Media Literasi`,
-  description:
-    'Platform penerbitan literasi modern dan toko buku resmi Frasa Klausa Media. Menghadirkan karya sastra, novel, puisi, dan tulisan inspiratif berkualitas tinggi.',
-  alternates: {
-    canonical: '/',
-  },
-  openGraph: {
-    title: `${OFFICIAL_IDENTITY.COMPANY_NAME} — Penerbit Buku & Media Literasi`,
-    description:
-      'Platform penerbitan literasi modern dan toko buku resmi Frasa Klausa Media. Menghadirkan karya sastra, novel, puisi, dan tulisan inspiratif.',
-    url: '/',
-    siteName: OFFICIAL_IDENTITY.COMPANY_NAME,
-    images: [{ url: '/logo/logo-landscape.jpg', width: 1200, height: 630, alt: OFFICIAL_IDENTITY.COMPANY_NAME }],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: `${OFFICIAL_IDENTITY.COMPANY_NAME} — Penerbit Buku & Media Literasi`,
-    description:
-      'Platform penerbitan literasi modern dan toko buku resmi Frasa Klausa Media. Menghadirkan karya sastra, novel, puisi, dan tulisan inspiratif.',
-    images: ['/logo/logo-landscape.jpg'],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const title = `${OFFICIAL_IDENTITY.COMPANY_NAME} — Penerbit Buku & Media Literasi`;
+  const description =
+    'Platform penerbitan literasi modern dan toko buku resmi Frasa Klausa Media. Menghadirkan karya sastra, novel, puisi, dan tulisan inspiratif berkualitas tinggi.';
+  const hero = await getSiteContentRecord('hero').catch(() => null);
+  const image = getOpenGraphImage({
+    sourceUrl: hero?.cover_image_url,
+    alt: hero?.headline || OFFICIAL_IDENTITY.COMPANY_NAME,
+  });
+
+  return {
+    title,
+    description,
+    alternates: { canonical: '/' },
+    openGraph: {
+      type: 'website',
+      title,
+      description,
+      url: '/',
+      siteName: OFFICIAL_IDENTITY.COMPANY_NAME,
+      images: [image],
+    },
+    twitter: { card: 'summary_large_image', title, description, images: [image.url] },
+  };
+}
 
 async function HomePageContent() {
   await connection();

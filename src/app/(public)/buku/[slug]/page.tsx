@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatRupiah } from '@/validations/book';
 import { OFFICIAL_IDENTITY } from '@/constants';
+import { getOpenGraphImage } from '@/lib/seo/open-graph';
 
 import { Suspense } from 'react';
 import { connection } from 'next/server';
@@ -36,6 +37,7 @@ export async function generateMetadata({ params }: BookDetailPageProps): Promise
   const description =
     book.seo_description ||
     `Pesan buku ${book.title} karya ${book.author} seharga ${formatRupiah(effectivePrice)} terbitan ${book.publisher}.`;
+  const image = getOpenGraphImage({ sourceUrl: book.cover_url, alt: book.title });
 
   return {
     title,
@@ -48,13 +50,13 @@ export async function generateMetadata({ params }: BookDetailPageProps): Promise
       url: `/buku/${slug}`,
       title: `${book.title} — ${book.author}`,
       description,
-      images: book.cover_url ? [{ url: book.cover_url, alt: book.title }] : [{ url: '/logo/logo-landscape.jpg', width: 1200, height: 630, alt: book.title }],
+      images: [image],
     },
     twitter: {
       card: 'summary_large_image',
       title: `${book.title} — ${book.author}`,
       description,
-      images: book.cover_url ? [book.cover_url] : ['/logo/logo-landscape.jpg'],
+      images: [image.url],
     },
   };
 }
