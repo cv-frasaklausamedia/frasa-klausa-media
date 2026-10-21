@@ -43,7 +43,7 @@ async function SiteContentContent() {
 
   if (hasError || !heroData || !aboutData || !contactData || !socialData) {
     return (
-      <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-6 text-center max-w-5xl mx-auto">
+      <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-6 text-center">
         <div className="flex flex-col items-center justify-center gap-3">
           <div className="rounded-full bg-destructive/10 p-3 text-destructive">
             <AlertCircle className="h-6 w-6" />
@@ -67,15 +67,17 @@ async function SiteContentContent() {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Header Halaman */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground font-serif">
-          Manajemen Konten Halaman Publik
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Perbarui teks Hero beranda, profil narasi &ldquo;Tentang Kami&rdquo;, informasi kontak resmi, dan tautan media sosial tanpa menyentuh kode program.
-        </p>
+    <div className="space-y-6">
+      {/* Header Halaman Konsisten dengan Dashboard */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-border/60">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-serif">
+            Manajemen Konten Halaman Publik
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Perbarui teks Hero beranda, profil narasi &ldquo;Tentang Kami&rdquo;, informasi kontak resmi, dan tautan media sosial tanpa menyentuh kode program.
+          </p>
+        </div>
       </div>
 
       {/* Tabs Konten Halaman */}

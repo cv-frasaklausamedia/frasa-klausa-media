@@ -149,7 +149,7 @@ export function GlobalSearchDialog() {
 
   const handleSelectBook = (slug: string) => {
     handleOpenChange(false);
-    router.push(`/katalog/${slug}`);
+    router.push(`/buku/${slug}`);
   };
 
   const handleSelectPost = (slug: string) => {

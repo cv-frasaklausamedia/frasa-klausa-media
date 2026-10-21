@@ -283,12 +283,12 @@ export function PostForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 max-w-5xl">
-      {/* Header Form */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {/* Header Form Konsisten dengan Dashboard */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-border/60">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <Button asChild variant="ghost" size="sm" className="h-8 px-2 -ml-2 text-muted-foreground">
+            <Button asChild variant="ghost" size="sm" className="h-7 px-2 -ml-2 text-muted-foreground hover:text-foreground">
               <Link href="/admin/blog">
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Kembali ke Daftar
@@ -298,14 +298,17 @@ export function PostForm({
               {isEditing ? 'Mode Edit' : 'Artikel Baru'}
             </Badge>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-serif">
             {isEditing ? `Ubah Artikel: ${initialData?.title}` : 'Tulis Artikel Literasi Baru'}
           </h1>
+          <p className="text-sm text-muted-foreground">
+            Lengkapi judul, konten artikel, sampul, dan metadata publikasi.
+          </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
           {isEditing && initialData && (
-            <Button asChild variant="outline" size="sm" className="gap-1.5">
+            <Button asChild variant="outline" size="sm" className="gap-1.5 h-9">
               <Link href={`/admin/blog/${initialData.id}/preview`} target="_blank">
                 <Eye className="h-4 w-4" />
                 <span>Pratinjau</span>
@@ -313,7 +316,7 @@ export function PostForm({
             </Button>
           )}
 
-          <Button type="submit" disabled={isPending} className="gap-2">
+          <Button type="submit" disabled={isPending} className="gap-2 h-9 w-full sm:w-auto justify-center">
             {isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />

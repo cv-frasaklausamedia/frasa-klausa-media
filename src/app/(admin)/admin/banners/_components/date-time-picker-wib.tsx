@@ -108,7 +108,7 @@ export function DateTimePickerWib({
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 z-50" align="start">
+          <PopoverContent className="w-auto p-0 z-50 border-border bg-popover shadow-md" align="start">
             <Calendar
               mode="single"
               selected={selectedDate}

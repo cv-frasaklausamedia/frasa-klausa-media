@@ -489,9 +489,9 @@ export function BookForm({ initialData, categories }: BookFormProps) {
   );
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 max-w-6xl">
-      {/* Top Action Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b pb-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {/* Top Action Bar Konsisten dengan Dashboard */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-border/60">
         <div className="flex items-center gap-3">
           <Button
             type="button"
@@ -499,14 +499,15 @@ export function BookForm({ initialData, categories }: BookFormProps) {
             size="icon"
             onClick={handleCancel}
             aria-label="Kembali ke daftar buku"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-serif">
               {isEditing ? `Edit Buku: ${initialData?.title}` : 'Tambah Buku Baru'}
             </h1>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground mt-0.5">
               {isEditing
                 ? 'Perbarui detail buku, unggah foto tambahan, atau sesuaikan harga dan channel checkout.'
                 : 'Lengkapi metadata buku, sampul, sinopsis, dan konfigurasi checkout resmi.'}
@@ -514,16 +515,17 @@ export function BookForm({ initialData, categories }: BookFormProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
           <Button
             type="button"
             variant="outline"
             onClick={handleCancel}
             disabled={isPending}
+            className="h-9 w-full sm:w-auto justify-center"
           >
             Batal
           </Button>
-          <Button type="submit" disabled={isPending} className="gap-2">
+          <Button type="submit" disabled={isPending} className="gap-2 h-9 w-full sm:w-auto justify-center">
             {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             <span>{isEditing ? 'Simpan Perubahan' : 'Terbitkan Buku'}</span>
           </Button>

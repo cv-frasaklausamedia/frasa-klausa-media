@@ -13,8 +13,8 @@ export const metadata: Metadata = {
 
 function NewBookSkeleton() {
   return (
-    <div className="space-y-6 max-w-6xl">
-      <div className="flex justify-between items-center pb-4 border-b">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center pb-2 border-b border-border/60">
         <Skeleton className="h-8 w-64" />
         <div className="flex gap-2">
           <Skeleton className="h-9 w-20" />

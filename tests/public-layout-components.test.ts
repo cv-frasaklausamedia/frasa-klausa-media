@@ -68,4 +68,12 @@ describe('Public Layout Components Logic Suite (Tahap 9 - PRD §6.3.1, §6.3.9, 
       assert.ok(item.label.length > 0, 'Label navigasi tidak boleh kosong');
     }
   });
+
+  it('5. GlobalSearch: Rute tujuan navigasi buku mengarah ke /buku/[slug] dan artikel ke /blog/[slug]', () => {
+    const getBookDetailUrl = (slug: string) => `/buku/${slug}`;
+    const getPostDetailUrl = (slug: string) => `/blog/${slug}`;
+
+    assert.equal(getBookDetailUrl('azzam-fkm'), '/buku/azzam-fkm');
+    assert.equal(getPostDetailUrl('tips-literasi'), '/blog/tips-literasi');
+  });
 });

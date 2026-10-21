@@ -265,15 +265,13 @@ export async function getPostById(id: string): Promise<PostDetail | null> {
  * Artikel draf atau terjadwal di masa depan AKAN mengembalikan null (404 Not Found) untuk publik anon.
  */
 export async function getPublicPostBySlug(slug: string): Promise<PostDetail | null> {
-  const supabase = await createClient();
-  const nowIso = new Date().toISOString();
+  const supabase = createPublicClient();
 
   const { data, error } = await supabase
     .from('posts')
     .select(POST_DETAIL_SELECT_COLUMNS)
     .eq('slug', slug)
     .eq('status', 'published')
-    .lte('published_at', nowIso)
     .maybeSingle();
 
   if (error) {
