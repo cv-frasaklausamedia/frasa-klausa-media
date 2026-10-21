@@ -6,24 +6,30 @@ import { WifiOff, RefreshCw, Home, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { OFFICIAL_IDENTITY } from '@/constants';
 
+function subscribeOnline(callback: () => void) {
+  window.addEventListener('online', callback);
+  window.addEventListener('offline', callback);
+  return () => {
+    window.removeEventListener('online', callback);
+    window.removeEventListener('offline', callback);
+  };
+}
+
+function getOnlineSnapshot() {
+  return navigator.onLine;
+}
+
+function getServerOnlineSnapshot() {
+  return false;
+}
+
 export default function OfflinePage() {
   const [isRetrying, setIsRetrying] = React.useState(false);
-  const [isOnline, setIsOnline] = React.useState(false);
-
-  React.useEffect(() => {
-    setIsOnline(navigator.onLine);
-
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+  const isOnline = React.useSyncExternalStore(
+    subscribeOnline,
+    getOnlineSnapshot,
+    getServerOnlineSnapshot
+  );
 
   const handleRetry = () => {
     setIsRetrying(true);
