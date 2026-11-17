@@ -1,5 +1,5 @@
 // Frasa Klausa Media - Service Worker (PWA)
-const CACHE_VERSION = 'fkm-pwa-v1';
+const CACHE_VERSION = 'fkm-pwa-v2';
 const OFFLINE_URL = '/offline';
 
 const PRECACHE_ASSETS = [
@@ -51,11 +51,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Bypass rute internal yang dinamis, sensitif, atau API
+  // Bypass rute internal yang dinamis, sensitif, API, atau chunk internal Next.js
+  // Next.js chunks telah dikelola otomatis secara aman oleh native browser HTTP cache (immutable)
   if (
     url.pathname.startsWith('/api/') ||
     url.pathname.startsWith('/admin') ||
-    url.pathname.startsWith('/_next/data/')
+    url.pathname.startsWith('/_next/')
   ) {
     return;
   }
@@ -94,9 +95,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Strategi untuk Aset Statis (_next/static, /icons, /logo, font, gambar): Stale-While-Revalidate
+  // 2. Strategi untuk Aset Statis (/icons, /logo, font, gambar): Stale-While-Revalidate
   const isStaticAsset =
-    url.pathname.startsWith('/_next/static/') ||
     url.pathname.startsWith('/icons/') ||
     url.pathname.startsWith('/logo/') ||
     /\.(?:png|jpg|jpeg|svg|webp|ico|woff2|woff|ttf)$/.test(url.pathname);

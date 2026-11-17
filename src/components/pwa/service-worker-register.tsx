@@ -13,6 +13,30 @@ export function ServiceWorkerRegister() {
       return;
     }
 
+    // Pada lingkungan pengembangan (development), Service Worker TIDAK boleh didaftarkan
+    // agar tidak mengintersepsi /_next/static/ chunks dan merusak Turbopack HMR / Fast Refresh.
+    // Sekaligus lakukan pembersihan jika ada SW lawas yang tertinggal di localhost.
+    if (process.env.NODE_ENV !== 'production') {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister().then((success) => {
+            if (success) {
+              console.info('[PWA] Service Worker lingkungan pengembangan berhasil dicopot (unregistered).');
+            }
+          });
+        }
+      });
+
+      if ('caches' in window) {
+        caches.keys().then((keys) => {
+          for (const key of keys) {
+            caches.delete(key);
+          }
+        });
+      }
+      return;
+    }
+
     const registerSW = async () => {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js', {

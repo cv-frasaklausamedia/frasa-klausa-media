@@ -83,6 +83,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
+  transpilePackages: ['recharts'],
   experimental: {
     agentUpgrade: 'security',
     serverActions: {
