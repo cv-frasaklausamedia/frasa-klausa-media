@@ -7,6 +7,8 @@ import { BookCard } from '@/components/public/book-card';
 import { KatalogFilterBar } from '@/components/public/katalog-filter-bar';
 import { KatalogSortSelect } from '@/components/public/katalog-sort-select';
 import { Pagination } from '@/components/public/pagination';
+import { JsonLd } from '@/components/public/json-ld';
+import { buildBreadcrumbJsonLd, buildItemListJsonLd } from '@/lib/seo/json-ld';
 import { OFFICIAL_IDENTITY } from '@/constants';
 import { getFallbackOpenGraphImage } from '@/lib/seo/open-graph';
 
@@ -45,9 +47,22 @@ export async function generateMetadata({ searchParams }: KatalogPageProps): Prom
     : 'Jelajahi karya sastra, novel, antologi puisi, dan buku berkualitas terbitan Frasa Klausa Media dengan filter kategori dan rentang harga.';
   const image = getFallbackOpenGraphImage('Katalog Buku Frasa Klausa Media');
 
+  const keywords = [
+    'katalog buku',
+    'katalog buku sastra',
+    'buku terbitan frasa klausa media',
+    'beli buku online',
+    'novel indonesia',
+    'antologi puisi',
+    'buku esai non fiksi',
+    ...(categoryLabel ? [`buku ${categoryLabel}`, `kategori ${categoryLabel}`] : []),
+    OFFICIAL_IDENTITY.COMPANY_NAME,
+  ];
+
   return {
     title,
     description,
+    keywords,
     alternates: {
       canonical: '/katalog',
     },
@@ -80,7 +95,10 @@ async function KatalogContent({ searchParams }: KatalogPageProps) {
     getBookCategoriesOptions(),
   ]);
 
-  const { items: books, totalCount, page, pageCount } = booksResponse;
+  const { items: books, totalCount, page, pageCount, pageSize } = booksResponse;
+
+  const startItem = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
+  const endItem = Math.min(page * pageSize, totalCount);
 
   const currentCategoryObj = categories.find(
     (c) =>
@@ -89,8 +107,33 @@ async function KatalogContent({ searchParams }: KatalogPageProps) {
       c.id.toLowerCase() === (queryParams.kategori || '').toLowerCase()
   );
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://frasaklausamedia.com';
+  const cleanBaseUrl = baseUrl.replace(/\/+$/, '');
+
+  const breadcrumbItems = [
+    { name: 'Beranda', url: '/' },
+    { name: 'Katalog Buku', url: '/katalog' },
+    ...(currentCategoryObj
+      ? [{ name: currentCategoryObj.name, url: `/katalog?kategori=${currentCategoryObj.slug}` }]
+      : []),
+  ];
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd(breadcrumbItems, cleanBaseUrl);
+
+  const itemListJsonLd = buildItemListJsonLd(
+    books.map((b) => ({
+      name: b.title,
+      url: `/buku/${b.slug}`,
+      image: b.cover_url,
+      author: b.author,
+    })),
+    cleanBaseUrl,
+    currentCategoryObj ? `Katalog Buku: ${currentCategoryObj.name}` : 'Katalog Buku Lengkap'
+  );
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+      <JsonLd data={breadcrumbJsonLd} />
+      <JsonLd data={itemListJsonLd} />
       {/* 1. Header & Breadcrumb */}
       <div className="space-y-3">
         <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
@@ -139,10 +182,17 @@ async function KatalogContent({ searchParams }: KatalogPageProps) {
       />
 
       {/* 3. Toolbar Hasil & Pengurutan */}
-      <div className="flex items-center justify-between border-b pb-4 gap-4">
-        <span className="text-xs text-muted-foreground font-medium">
-          Halaman <strong className="text-foreground">{page}</strong> dari <strong>{pageCount}</strong>
-        </span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 pb-2">
+        <div className="text-xs text-muted-foreground font-medium">
+          {totalCount > 0 ? (
+            <span>
+              Menampilkan <strong className="text-foreground">{startItem}–{endItem}</strong> dari{' '}
+              <strong className="text-foreground">{totalCount}</strong> buku
+            </span>
+          ) : (
+            <span>Menampilkan 0 buku</span>
+          )}
+        </div>
         <KatalogSortSelect currentSort={queryParams.sort} />
       </div>
 

@@ -139,6 +139,8 @@ export interface Database {
           whatsapp_message_template: string | null;
           seo_title: string | null;
           seo_description: string | null;
+          author_bio: string | null;
+          dimension: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -165,6 +167,8 @@ export interface Database {
           whatsapp_message_template?: string | null;
           seo_title?: string | null;
           seo_description?: string | null;
+          author_bio?: string | null;
+          dimension?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -191,6 +195,8 @@ export interface Database {
           whatsapp_message_template?: string | null;
           seo_title?: string | null;
           seo_description?: string | null;
+          author_bio?: string | null;
+          dimension?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -564,6 +570,8 @@ export interface Database {
           p_seo_description: string | null;
           p_gallery_images?: Json;
           p_related_book_ids?: string[];
+          p_author_bio?: string | null;
+          p_dimension?: string | null;
         };
         Returns: {
           book_id: string;

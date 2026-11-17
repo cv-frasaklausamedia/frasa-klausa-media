@@ -139,9 +139,11 @@ export function BookForm({ initialData, categories }: BookFormProps) {
       publish_year: initialData?.publish_year ?? new Date().getFullYear(),
       isbn: initialData?.isbn ?? '',
       page_count: initialData?.page_count ?? 100,
+      dimension: initialData?.dimension ?? '',
       price_regular: initialData?.price_regular ?? 0,
       price_promo: initialData?.price_promo ?? null,
       description: initialData?.description ?? '',
+      author_bio: initialData?.author_bio ?? '',
       cover_url: initialData?.cover_url ?? null,
       gallery: initialData?.gallery ?? [],
       is_featured: initialData?.is_featured ?? false,
@@ -474,9 +476,7 @@ export function BookForm({ initialData, categories }: BookFormProps) {
 
   const previewSlug = watchedSlug?.trim() || 'contoh-buku';
   const cleanAppUrl = (
-    typeof window !== 'undefined'
-      ? window.location.origin
-      : process.env.NEXT_PUBLIC_APP_URL || 'https://www.frasaklausamedia.com'
+    process.env.NEXT_PUBLIC_APP_URL || 'https://www.frasaklausamedia.com'
   ).replace(/\/+$/, '');
   const previewBookUrl = `${cleanAppUrl}/buku/${previewSlug}`;
 
@@ -679,7 +679,7 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="isbn" className="text-xs font-semibold">
                     ISBN (ISBN-10 atau ISBN-13)
@@ -709,6 +709,22 @@ export function BookForm({ initialData, categories }: BookFormProps) {
                   />
                   {errors.page_count && (
                     <p id="page_count-error" className="text-xs text-destructive">{errors.page_count.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="dimension" className="text-xs font-semibold">
+                    Ukuran Buku (Opsional)
+                  </Label>
+                  <Input
+                    id="dimension"
+                    {...register('dimension')}
+                    placeholder="Contoh: 14 x 20 cm"
+                    aria-invalid={Boolean(errors.dimension)}
+                    aria-describedby={errors.dimension ? 'dimension-error' : undefined}
+                  />
+                  {errors.dimension && (
+                    <p id="dimension-error" className="text-xs text-destructive">{errors.dimension.message}</p>
                   )}
                 </div>
               </div>
@@ -747,6 +763,38 @@ export function BookForm({ initialData, categories }: BookFormProps) {
               />
               {errors.description && (
                 <p id="description-error" className="text-xs text-destructive mt-1.5">{errors.description.message}</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Tentang Penulis */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base font-semibold">
+                <Label htmlFor="author_bio" className="text-base font-semibold">
+                  Tentang Penulis
+                </Label>
+              </CardTitle>
+              <CardDescription id="author_bio-hint" className="text-xs">
+                Biografi singkat, latar belakang, karya lain, atau profil penulis buku ini (opsional).
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Textarea
+                id="author_bio"
+                {...register('author_bio')}
+                placeholder="Tuliskan biografi singkat atau profil penulis buku..."
+                rows={5}
+                className="resize-y text-sm"
+                aria-invalid={Boolean(errors.author_bio)}
+                aria-describedby={errors.author_bio ? 'author_bio-error' : 'author_bio-hint'}
+              />
+              <div className="flex justify-between items-center text-[11px] text-muted-foreground">
+                <span>Maksimal 5.000 karakter</span>
+                <span>{(watch('author_bio') || '').length}/5000</span>
+              </div>
+              {errors.author_bio && (
+                <p id="author_bio-error" className="text-xs text-destructive mt-1.5">{errors.author_bio.message}</p>
               )}
             </CardContent>
           </Card>
@@ -935,13 +983,23 @@ export function BookForm({ initialData, categories }: BookFormProps) {
             <CardContent className="space-y-3">
               <div className="relative aspect-[3/4] w-full max-w-[200px] mx-auto rounded-lg border bg-muted flex items-center justify-center overflow-hidden">
                 {watchedCoverUrl ? (
-                  <Image
-                    src={watchedCoverUrl}
-                    alt="Pratinjau Sampul Buku"
-                    fill
-                    sizes="200px"
-                    className="object-cover"
-                  />
+                  <>
+                    <Image
+                      src={watchedCoverUrl}
+                      alt=""
+                      aria-hidden="true"
+                      fill
+                      sizes="200px"
+                      className="object-cover blur-md scale-110 opacity-60 dark:opacity-40 pointer-events-none select-none"
+                    />
+                    <Image
+                      src={watchedCoverUrl}
+                      alt="Pratinjau Sampul Buku"
+                      fill
+                      sizes="200px"
+                      className="relative z-10 object-contain drop-shadow-xs"
+                    />
+                  </>
                 ) : (
                   <div className="flex flex-col items-center gap-2 text-muted-foreground p-4 text-center">
                     <BookOpen className="h-8 w-8 stroke-[1.5]" />

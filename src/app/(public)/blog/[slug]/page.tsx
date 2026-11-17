@@ -38,9 +38,24 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   const description = post.seo_description || post.excerpt;
   const image = getOpenGraphImage({ sourceUrl: post.cover_url, alt: post.title });
 
+  const keywords = [
+    post.title,
+    `artikel ${post.title}`,
+    post.author_name,
+    `penulis ${post.author_name}`,
+    ...(post.category?.name
+      ? [post.category.name, `kategori ${post.category.name}`]
+      : []),
+    ...(post.tags || []),
+    'blog sastra',
+    'artikel literasi',
+    OFFICIAL_IDENTITY.COMPANY_NAME,
+  ].filter(Boolean);
+
   return {
     title: `${title} | Blog ${OFFICIAL_IDENTITY.COMPANY_NAME}`,
     description,
+    keywords,
     alternates: {
       canonical: `/blog/${post.slug}`,
     },
@@ -50,7 +65,10 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
       title,
       description,
       publishedTime: post.published_at || undefined,
+      modifiedTime: post.updated_at || post.published_at || undefined,
       authors: [post.author_name],
+      section: post.category?.name,
+      tags: [post.category?.name, post.author_name, ...(post.tags || [])].filter(Boolean) as string[],
       images: [image],
     },
     twitter: {
@@ -122,7 +140,11 @@ async function BlogPostDetailContent({ params }: BlogPostPageProps) {
       {/* 2. Grid 2 Kolom Responsif: 70% Konten Artikel & 30% Komponen Share/Sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
         {/* Kolom Kiri: 70% Lebar (lg:col-span-8) */}
-        <article className="lg:col-span-8 space-y-8 min-w-0">
+        <article
+          itemScope
+          itemType="https://schema.org/BlogPosting"
+          className="lg:col-span-8 space-y-8 min-w-0"
+        >
           {/* Header Artikel */}
           <header className="space-y-4">
             {category && (
@@ -131,28 +153,41 @@ async function BlogPostDetailContent({ params }: BlogPostPageProps) {
               </Badge>
             )}
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold tracking-tight text-foreground leading-[1.2]">
+            <h1
+              itemProp="headline"
+              className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold tracking-tight text-foreground leading-[1.2]"
+            >
               {post.title}
             </h1>
 
             {/* Ringkasan Subtitle */}
             {post.excerpt && (
-              <p className="text-base sm:text-lg text-muted-foreground leading-relaxed font-normal">
+              <p
+                itemProp="description"
+                className="text-base sm:text-lg text-muted-foreground leading-relaxed font-normal"
+              >
                 {post.excerpt}
               </p>
             )}
 
             {/* Info Penulis, Tanggal, dan Read Time */}
             <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-muted-foreground pt-2 border-y border-border/70 py-3">
-              <span className="flex items-center gap-1.5 font-medium text-foreground">
+              <span
+                itemProp="author"
+                itemScope
+                itemType="https://schema.org/Person"
+                className="flex items-center gap-1.5 font-medium text-foreground"
+              >
                 <User className="h-4 w-4 text-muted-foreground" />
-                {post.author_name}
+                <span itemProp="name">{post.author_name}</span>
               </span>
               <span>•</span>
               {post.published_at && (
                 <span className="flex items-center gap-1.5">
                   <Calendar className="h-4 w-4" />
-                  <span>{formatDateIndo(post.published_at)}</span>
+                  <time itemProp="datePublished" dateTime={post.published_at}>
+                    {formatDateIndo(post.published_at)}
+                  </time>
                 </span>
               )}
               <span>•</span>
@@ -180,6 +215,7 @@ async function BlogPostDetailContent({ params }: BlogPostPageProps) {
           {/* Konten Teks Kaya Tersanitasi dengan Tipografi Teroptimasi (Tailwind Prose) */}
           <main className="pt-2">
             <div
+              itemProp="articleBody"
               className="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-serif prose-headings:font-bold prose-headings:tracking-tight prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-img:shadow-sm leading-relaxed text-base sm:text-lg"
               dangerouslySetInnerHTML={{ __html: sanitizedContent }}
             />

@@ -1,12 +1,28 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Sparkles, BookOpen, Layers, Newspaper, HeartHandshake, CheckCircle2 } from 'lucide-react';
+import {
+  ArrowRight,
+  Sparkles,
+  BookOpen,
+  Layers,
+  Newspaper,
+  HeartHandshake,
+  CheckCircle2,
+  FileEdit,
+  Feather,
+  Printer,
+  MessageSquare,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BookCard } from '@/components/public/book-card';
 import { JsonLd } from '@/components/public/json-ld';
-import { buildOrganizationJsonLd, buildWebSiteJsonLd } from '@/lib/seo/json-ld';
+import {
+  buildOrganizationJsonLd,
+  buildWebSiteJsonLd,
+  buildPublishingServicesJsonLd,
+} from '@/lib/seo/json-ld';
 import { getSiteContentRecord } from '@/lib/site-content/data-access';
 import { getFeaturedBooks, getLatestBooks } from '@/lib/books/data-access';
 import { getPopularBookCategories } from '@/lib/categories/data-access';
@@ -31,6 +47,19 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
+    keywords: [
+      'penerbit buku indonesia',
+      'toko buku online indonesia',
+      'beli buku sastra',
+      'buku novel terpopuler',
+      'kumpulan antologi puisi',
+      'buku esai non fiksi',
+      'jasa penerbitan buku ber-isbn',
+      'terbitkan buku mandiri',
+      'frasa klausa media',
+      'cv frasa klausa media',
+      'penulis buku indonesia',
+    ],
     alternates: { canonical: '/' },
     openGraph: {
       type: 'website',
@@ -73,11 +102,52 @@ async function HomePageContent() {
 
   const orgJsonLd = buildOrganizationJsonLd(baseUrl);
   const websiteJsonLd = buildWebSiteJsonLd(baseUrl);
+  const servicesJsonLd = buildPublishingServicesJsonLd(baseUrl);
+
+  const homeServices = [
+    {
+      title: 'Penerbitan Ber-ISBN Resmi',
+      badge: 'Legalitas',
+      description:
+        'Pengurusan nomor ISBN & QRCBN resmi Perpustakaan Nasional RI, barcode standar, dan deposit karya cetak.',
+      icon: BookOpen,
+      highlight: 'Hak cipta 100% milik penulis',
+    },
+    {
+      title: 'Editorial & Bedah Naskah',
+      badge: 'Kualitas Redaksi',
+      description:
+        'Penyuntingan substantif, copyediting standar EYD V, dan proofreading teliti bergaransi bebas tipo.',
+      icon: FileEdit,
+      highlight: 'Editor profesional & bersertifikat',
+    },
+    {
+      title: 'Desain Sampul & Tata Letak',
+      badge: 'Visual Artistik',
+      description:
+        'Cover buku eksklusif bernilai jual tinggi serta penataan interior (typesetting) rapi dan ramah baca.',
+      icon: Feather,
+      highlight: 'Layout InDesign & 3D Mockup',
+    },
+    {
+      title: 'Cetak & Distribusi Toko',
+      badge: 'Multi-Kanal',
+      description:
+        'Cetak POD fleksibel hingga ribuan eksemplar, konversi e-book, serta etalase di Shopee & Tokopedia.',
+      icon: Printer,
+      highlight: 'Toko resmi & Google Play Books',
+    },
+  ];
+
+  const waConsultHomeUrl = `https://wa.me/${OFFICIAL_IDENTITY.WHATSAPP}?text=${encodeURIComponent(
+    'Halo Redaksi CV. Frasa Klausa Media, saya ingin konsultasi mengenai penerbitan naskah buku.'
+  )}`;
 
   return (
     <div className="flex flex-col gap-16 md:gap-24 pb-20">
       <JsonLd data={orgJsonLd} />
       <JsonLd data={websiteJsonLd} />
+      <JsonLd data={servicesJsonLd} />
       {/* 1. HERO SECTION DINAMIS DARI CMS */}
       <section className="relative overflow-hidden border-b bg-gradient-to-b from-muted/40 via-background to-background py-16 sm:py-24 lg:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -241,7 +311,96 @@ async function HomePageContent() {
         </section>
       )}
 
-      {/* 5. ARTIKEL BLOG TERBARU */}
+      {/* 5. RINGKASAN LAYANAN PENERBITAN (SUMMARY) */}
+      <section className="border-y bg-muted/25 py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-2 text-primary text-xs font-semibold uppercase tracking-wider mb-2">
+                <Layers className="h-3.5 w-3.5" />
+                Layanan & Ekosistem Redaksi
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-serif font-bold tracking-tight text-foreground">
+                Wujudkan Naskah Anda Menjadi Buku Berkualitas
+              </h2>
+              <p className="mt-3 text-base text-muted-foreground leading-relaxed">
+                CV. Frasa Klausa Media mendampingi setiap langkah penerbitan Anda—mulai dari kurasi draf, penyuntingan naskah, legalitas ISBN resmi, hingga cetak dan distribusi nasional.
+              </p>
+            </div>
+
+            <Button asChild variant="outline" className="gap-2 self-start md:self-auto shrink-0 shadow-2xs">
+              <Link href="/tentang-kami#layanan">
+                Pelajari Seluruh Layanan <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {homeServices.map((service, sIdx) => {
+              const IconComp = service.icon;
+              return (
+                <div
+                  key={sIdx}
+                  className="group rounded-2xl border bg-card p-6 shadow-xs flex flex-col justify-between hover:border-primary/40 hover:shadow-md transition-all duration-200"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:scale-105 transition-transform duration-200">
+                        <IconComp className="h-5 w-5" />
+                      </div>
+                      <Badge variant="secondary" className="text-[10px] font-normal px-2 py-0.5">
+                        {service.badge}
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <h3 className="font-serif font-bold text-lg text-foreground group-hover:text-primary transition-colors">
+                        {service.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {service.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 mt-4 border-t flex items-center justify-between text-xs text-primary font-medium">
+                    <span>{service.highlight}</span>
+                    <ArrowRight className="h-3.5 w-3.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Quick CTA Box */}
+          <div className="mt-10 rounded-2xl border bg-background p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xs">
+            <div className="space-y-1 text-center sm:text-left">
+              <h4 className="font-serif font-bold text-lg text-foreground">
+                Punya Naskah yang Siap Diterbitkan?
+              </h4>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Konsultasikan naskah fiksi, puisi, esai, maupun buku ajar Anda bersama redaksi kami secara gratis.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 shrink-0">
+              <Button asChild size="sm" className="gap-2 shadow-xs">
+                <a href={waConsultHomeUrl} target="_blank" rel="noopener noreferrer">
+                  <MessageSquare className="h-4 w-4" />
+                  Konsultasi via WhatsApp
+                </a>
+              </Button>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/tentang-kami#layanan">
+                  Alur Penerbitan
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. ARTIKEL BLOG TERBARU */}
       {latestPosts.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
@@ -310,7 +469,7 @@ async function HomePageContent() {
         </section>
       )}
 
-      {/* 6. SEKILAS TENTANG KAMI DARI PAGE CMS */}
+      {/* 7. SEKILAS TENTANG KAMI DARI PAGE CMS */}
       {about && (
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
           <div className="rounded-2xl border bg-gradient-to-br from-primary/5 via-background to-muted/20 p-8 sm:p-12 lg:p-16">

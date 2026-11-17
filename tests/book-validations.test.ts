@@ -428,6 +428,56 @@ describe('Book Validations Suite (Fase 1)', () => {
       assert.equal(bookFormSchema.safeParse(emptyCoverData).success, true);
       assert.equal(bookFormSchema.parse(emptyCoverData).cover_url, null);
     });
+
+    it('menerima dan mentransformasikan dimension dan author_bio yang sah', () => {
+      const dataWithDetails = {
+        ...validBaseData,
+        dimension: ' 14 x 20 cm ',
+        author_bio: ' Penulis buku sastra berprestasi. ',
+      };
+      const parsed = bookFormSchema.parse(dataWithDetails);
+      assert.equal(parsed.dimension, '14 x 20 cm');
+      assert.equal(parsed.author_bio, 'Penulis buku sastra berprestasi.');
+    });
+
+    it('mentransformasikan dimension dan author_bio kosong/whitespace menjadi null', () => {
+      const dataWithEmpty = {
+        ...validBaseData,
+        dimension: '   ',
+        author_bio: '',
+      };
+      const parsed = bookFormSchema.parse(dataWithEmpty);
+      assert.equal(parsed.dimension, null);
+      assert.equal(parsed.author_bio, null);
+    });
+
+    it('menolak jika dimension melebihi 50 karakter', () => {
+      const invalidData = {
+        ...validBaseData,
+        dimension: 'A'.repeat(51),
+      };
+      const result = bookFormSchema.safeParse(invalidData);
+      assert.equal(result.success, false);
+      if (!result.success) {
+        const issue = result.error.issues.find((i) => i.path.includes('dimension'));
+        assert.ok(issue);
+        assert.equal(issue?.message, 'Ukuran buku maksimal 50 karakter');
+      }
+    });
+
+    it('menolak jika author_bio melebihi 5000 karakter', () => {
+      const invalidData = {
+        ...validBaseData,
+        author_bio: 'A'.repeat(5001),
+      };
+      const result = bookFormSchema.safeParse(invalidData);
+      assert.equal(result.success, false);
+      if (!result.success) {
+        const issue = result.error.issues.find((i) => i.path.includes('author_bio'));
+        assert.ok(issue);
+        assert.equal(issue?.message, 'Tentang penulis maksimal 5.000 karakter');
+      }
+    });
   });
 
   // --------------------------------------------------------------------------

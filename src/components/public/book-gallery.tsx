@@ -82,14 +82,24 @@ export function BookGallery({ coverUrl, title, gallery }: BookGalleryProps) {
       {/* Gambar Utama (Aspect Ratio 3/4) */}
       <div className="group relative w-full aspect-[3/4] overflow-hidden rounded-2xl border bg-muted/30 shadow-xs">
         {currentImage ? (
-          <Image
-            src={currentImage.url}
-            alt={currentImage.alt}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 45vw, 40vw"
-            priority
-            className="object-cover transition-transform duration-300 group-hover:scale-102"
-          />
+          <>
+            <Image
+              src={currentImage.url}
+              alt=""
+              aria-hidden="true"
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 45vw, 40vw"
+              className="object-cover blur-xl scale-115 opacity-60 dark:opacity-40 pointer-events-none select-none"
+            />
+            <Image
+              src={currentImage.url}
+              alt={currentImage.alt}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 45vw, 40vw"
+              priority
+              className="relative z-10 object-contain drop-shadow-md transition-transform duration-300 group-hover:scale-102"
+            />
+          </>
         ) : null}
 
         {/* Indikator Angka Gambar */}

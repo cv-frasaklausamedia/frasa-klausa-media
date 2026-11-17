@@ -32,14 +32,24 @@ export function BookCard({ book, priority = false }: BookCardProps) {
         aria-hidden="true"
       >
         {book.cover_url ? (
-          <Image
-            src={book.cover_url}
-            alt={`Sampul buku ${book.title}`}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            priority={priority}
-          />
+          <>
+            <Image
+              src={book.cover_url}
+              alt=""
+              aria-hidden="true"
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-cover blur-md scale-110 opacity-60 dark:opacity-40 pointer-events-none select-none"
+            />
+            <Image
+              src={book.cover_url}
+              alt={`Sampul buku ${book.title}`}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="relative z-10 object-contain drop-shadow-xs transition-transform duration-500 group-hover:scale-105"
+              priority={priority}
+            />
+          </>
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center p-4 text-center text-muted-foreground/50">
             <BookOpen className="h-10 w-10 mb-2 stroke-[1.5]" />

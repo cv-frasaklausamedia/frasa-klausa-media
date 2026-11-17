@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface PaginationProps {
@@ -32,7 +32,7 @@ export function Pagination({
     return qs ? `${basePath}?${qs}` : basePath;
   };
 
-  // Logika pembuatan rentang halaman yang rapi (1 ... 4 5 6 ... 10)
+  // Logika pembuatan rentang halaman desktop yang rapi (1 ... 4 5 6 ... 10)
   const getPageNumbers = () => {
     const pages: (number | 'ellipsis')[] = [];
     if (pageCount <= 7) {
@@ -68,92 +68,183 @@ export function Pagination({
     <nav
       role="navigation"
       aria-label="Navigasi Halaman"
-      className="flex items-center justify-center gap-1.5 pt-8"
+      className="flex flex-col items-center justify-center pt-8 pb-4"
     >
-      {/* Tombol Sebelumnya */}
-      <Button
-        asChild={currentPage > 1}
-        disabled={currentPage <= 1}
-        variant="outline"
-        size="sm"
-        className="h-9 gap-1 px-3 text-xs"
-        aria-label="Halaman sebelumnya"
-      >
+      {/* 1. Tampilan Mobile Ringkas & Anti-Overflow (< sm) */}
+      <div className="flex sm:hidden items-center justify-between w-full max-w-xs gap-3">
         {currentPage > 1 ? (
-          <Link href={buildUrl(currentPage - 1)} prefetch={false}>
-            <ChevronLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Sebelumnya</span>
+          <Link
+            href={buildUrl(currentPage - 1)}
+            prefetch={false}
+            className={cn(
+              buttonVariants({ variant: 'outline', size: 'sm' }),
+              'h-9 px-3 rounded-lg gap-1.5 text-xs font-medium whitespace-nowrap inline-flex items-center'
+            )}
+            aria-label="Halaman sebelumnya"
+          >
+            <ChevronLeft className="h-4 w-4 shrink-0" />
+            <span>Sebelumnya</span>
           </Link>
         ) : (
-          <span>
-            <ChevronLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Sebelumnya</span>
-          </span>
+          <button
+            type="button"
+            disabled
+            className={cn(
+              buttonVariants({ variant: 'outline', size: 'sm' }),
+              'h-9 px-3 rounded-lg gap-1.5 text-xs font-medium whitespace-nowrap inline-flex items-center opacity-40 cursor-not-allowed'
+            )}
+            aria-label="Halaman sebelumnya"
+            aria-disabled="true"
+          >
+            <ChevronLeft className="h-4 w-4 shrink-0" />
+            <span>Sebelumnya</span>
+          </button>
         )}
-      </Button>
 
-      {/* Nomor-Nomor Halaman */}
-      <div className="flex items-center gap-1">
-        {pages.map((p, idx) => {
-          if (p === 'ellipsis') {
-            return (
-              <span
-                key={`ellipsis-${idx}`}
-                className="flex h-9 w-9 items-center justify-center text-muted-foreground"
-                aria-hidden="true"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </span>
-            );
-          }
+        <span className="text-xs text-muted-foreground font-medium select-none whitespace-nowrap px-2.5 py-1 rounded-md bg-muted/40 border border-border/40">
+          <strong className="text-foreground font-semibold">{currentPage}</strong> / {pageCount}
+        </span>
 
-          const isActive = p === currentPage;
-          return (
-            <Button
-              key={`page-${p}`}
-              asChild={!isActive}
-              variant={isActive ? 'default' : 'outline'}
-              size="icon"
-              className={cn(
-                'h-9 w-9 text-xs',
-                isActive && 'pointer-events-none font-bold'
-              )}
-              aria-current={isActive ? 'page' : undefined}
-              aria-label={`Ke halaman ${p}`}
-            >
-              {isActive ? (
-                <span>{p}</span>
-              ) : (
-                <Link href={buildUrl(p)} prefetch={false}>
-                  {p}
-                </Link>
-              )}
-            </Button>
-          );
-        })}
+        {currentPage < pageCount ? (
+          <Link
+            href={buildUrl(currentPage + 1)}
+            prefetch={false}
+            className={cn(
+              buttonVariants({ variant: 'outline', size: 'sm' }),
+              'h-9 px-3 rounded-lg gap-1.5 text-xs font-medium whitespace-nowrap inline-flex items-center'
+            )}
+            aria-label="Halaman berikutnya"
+          >
+            <span>Berikutnya</span>
+            <ChevronRight className="h-4 w-4 shrink-0" />
+          </Link>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className={cn(
+              buttonVariants({ variant: 'outline', size: 'sm' }),
+              'h-9 px-3 rounded-lg gap-1.5 text-xs font-medium whitespace-nowrap inline-flex items-center opacity-40 cursor-not-allowed'
+            )}
+            aria-label="Halaman berikutnya"
+            aria-disabled="true"
+          >
+            <span>Berikutnya</span>
+            <ChevronRight className="h-4 w-4 shrink-0" />
+          </button>
+        )}
       </div>
 
-      {/* Tombol Berikutnya */}
-      <Button
-        asChild={currentPage < pageCount}
-        disabled={currentPage >= pageCount}
-        variant="outline"
-        size="sm"
-        className="h-9 gap-1 px-3 text-xs"
-        aria-label="Halaman berikutnya"
-      >
-        {currentPage < pageCount ? (
-          <Link href={buildUrl(currentPage + 1)} prefetch={false}>
-            <span className="hidden sm:inline">Berikutnya</span>
-            <ChevronRight className="h-4 w-4" />
+      {/* 2. Tampilan Tablet & Desktop Lengkap (>= sm) */}
+      <div className="hidden sm:flex items-center justify-center gap-2">
+        {/* Tombol Sebelumnya */}
+        {currentPage > 1 ? (
+          <Link
+            href={buildUrl(currentPage - 1)}
+            prefetch={false}
+            className={cn(
+              buttonVariants({ variant: 'outline', size: 'sm' }),
+              'h-9 px-3.5 text-xs font-medium rounded-lg border-border/60 gap-1.5 whitespace-nowrap inline-flex items-center'
+            )}
+            aria-label="Halaman sebelumnya"
+          >
+            <ChevronLeft className="h-4 w-4 shrink-0" />
+            <span>Sebelumnya</span>
           </Link>
         ) : (
-          <span>
-            <span className="hidden sm:inline">Berikutnya</span>
-            <ChevronRight className="h-4 w-4" />
-          </span>
+          <button
+            type="button"
+            disabled
+            className={cn(
+              buttonVariants({ variant: 'outline', size: 'sm' }),
+              'h-9 px-3.5 text-xs font-medium rounded-lg border-border/60 gap-1.5 whitespace-nowrap inline-flex items-center opacity-40 cursor-not-allowed'
+            )}
+            aria-label="Halaman sebelumnya"
+            aria-disabled="true"
+          >
+            <ChevronLeft className="h-4 w-4 shrink-0" />
+            <span>Sebelumnya</span>
+          </button>
         )}
-      </Button>
+
+        {/* Nomor-Nomor Halaman */}
+        <div className="flex items-center gap-1.5 mx-1">
+          {pages.map((p, idx) => {
+            if (p === 'ellipsis') {
+              return (
+                <span
+                  key={`ellipsis-${idx}`}
+                  className="flex h-9 w-9 items-center justify-center text-muted-foreground/60 select-none"
+                  aria-hidden="true"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </span>
+              );
+            }
+
+            const isActive = p === currentPage;
+            if (isActive) {
+              return (
+                <span
+                  key={`page-${p}`}
+                  aria-current="page"
+                  className={cn(
+                    buttonVariants({ variant: 'default', size: 'icon' }),
+                    'h-9 w-9 text-xs font-semibold rounded-lg pointer-events-none shadow-xs select-none'
+                  )}
+                >
+                  {p}
+                </span>
+              );
+            }
+
+            return (
+              <Link
+                key={`page-${p}`}
+                href={buildUrl(p)}
+                prefetch={false}
+                aria-label={`Ke halaman ${p}`}
+                className={cn(
+                  buttonVariants({ variant: 'outline', size: 'icon' }),
+                  'h-9 w-9 text-xs font-medium rounded-lg border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors'
+                )}
+              >
+                {p}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Tombol Berikutnya */}
+        {currentPage < pageCount ? (
+          <Link
+            href={buildUrl(currentPage + 1)}
+            prefetch={false}
+            className={cn(
+              buttonVariants({ variant: 'outline', size: 'sm' }),
+              'h-9 px-3.5 text-xs font-medium rounded-lg border-border/60 gap-1.5 whitespace-nowrap inline-flex items-center'
+            )}
+            aria-label="Halaman berikutnya"
+          >
+            <span>Berikutnya</span>
+            <ChevronRight className="h-4 w-4 shrink-0" />
+          </Link>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className={cn(
+              buttonVariants({ variant: 'outline', size: 'sm' }),
+              'h-9 px-3.5 text-xs font-medium rounded-lg border-border/60 gap-1.5 whitespace-nowrap inline-flex items-center opacity-40 cursor-not-allowed'
+            )}
+            aria-label="Halaman berikutnya"
+            aria-disabled="true"
+          >
+            <span>Berikutnya</span>
+            <ChevronRight className="h-4 w-4 shrink-0" />
+          </button>
+        )}
+      </div>
     </nav>
   );
 }

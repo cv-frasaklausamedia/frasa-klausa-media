@@ -181,7 +181,7 @@ export async function getBookById(id: string): Promise<BookDetail | null> {
   const { data: bookRow, error: bookError } = await supabase
     .from('books')
     .select(
-      'id, title, slug, description, cover_url, category_id, author, editor, publisher, publish_year, isbn, page_count, price_regular, price_promo, is_featured, is_published, shopee_url, tokopedia_url, whatsapp_number, whatsapp_message_template, seo_title, seo_description, created_at, updated_at, book_categories(id, name)'
+      'id, title, slug, description, cover_url, category_id, author, editor, publisher, publish_year, isbn, page_count, price_regular, price_promo, is_featured, is_published, shopee_url, tokopedia_url, whatsapp_number, whatsapp_message_template, seo_title, seo_description, author_bio, dimension, created_at, updated_at, book_categories(id, name)'
     )
     .eq('id', id)
     .maybeSingle();
@@ -217,6 +217,8 @@ export async function getBookById(id: string): Promise<BookDetail | null> {
     whatsapp_message_template: (bookRow as { whatsapp_message_template?: string | null }).whatsapp_message_template ?? null,
     seo_title: (bookRow as { seo_title?: string | null }).seo_title ?? null,
     seo_description: (bookRow as { seo_description?: string | null }).seo_description ?? null,
+    author_bio: (bookRow as { author_bio?: string | null }).author_bio ?? null,
+    dimension: (bookRow as { dimension?: string | null }).dimension ?? null,
     gallery: (galleryRows || []).map((img) => ({
       id: img.id,
       image_url: img.image_url,
@@ -282,6 +284,8 @@ export async function callUpsertBookAtomic(
     p_seo_description: data.seo_description,
     p_gallery_images: data.gallery as unknown as Database['public']['Tables']['books']['Insert'],
     p_related_book_ids: data.related_book_ids,
+    p_author_bio: data.author_bio ?? null,
+    p_dimension: data.dimension ?? null,
   };
 
   const { data: resultData, error: rpcError } = await supabase.rpc(
@@ -647,7 +651,7 @@ export async function getPublicBookBySlug(slug: string): Promise<BookDetail | nu
   const { data: bookRow, error: bookError } = await supabase
     .from('books')
     .select(
-      'id, title, slug, description, cover_url, category_id, author, editor, publisher, publish_year, isbn, page_count, price_regular, price_promo, is_featured, is_published, shopee_url, tokopedia_url, whatsapp_number, whatsapp_message_template, seo_title, seo_description, created_at, updated_at, book_categories(id, name, slug)'
+      'id, title, slug, description, cover_url, category_id, author, editor, publisher, publish_year, isbn, page_count, price_regular, price_promo, is_featured, is_published, shopee_url, tokopedia_url, whatsapp_number, whatsapp_message_template, seo_title, seo_description, author_bio, dimension, created_at, updated_at, book_categories(id, name, slug)'
     )
     .eq('slug', slug)
     .eq('is_published', true)
@@ -686,6 +690,8 @@ export async function getPublicBookBySlug(slug: string): Promise<BookDetail | nu
     whatsapp_message_template: (bookRow as { whatsapp_message_template?: string | null }).whatsapp_message_template ?? null,
     seo_title: (bookRow as { seo_title?: string | null }).seo_title ?? null,
     seo_description: (bookRow as { seo_description?: string | null }).seo_description ?? null,
+    author_bio: (bookRow as { author_bio?: string | null }).author_bio ?? null,
+    dimension: (bookRow as { dimension?: string | null }).dimension ?? null,
     gallery: (galleryRows || []).map((img) => ({
       id: img.id,
       image_url: img.image_url,

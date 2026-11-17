@@ -5,6 +5,8 @@ import { AppProviders } from '@/providers/app-providers';
 import { Toaster } from 'sonner';
 import { getFallbackOpenGraphImage } from '@/lib/seo/open-graph';
 import { ServiceWorkerRegister } from '@/components/pwa/service-worker-register';
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const fontSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -125,6 +127,8 @@ export default function RootLayout({
           <Toaster richColors position="top-right" closeButton />
           <ServiceWorkerRegister />
         </AppProviders>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

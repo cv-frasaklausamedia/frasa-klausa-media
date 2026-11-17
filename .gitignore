@@ -44,3 +44,6 @@ Thumbs.db
 
 # Agent configurations and secrets
 .agents/mcp_config.json
+
+# Turborepo
+.turbo

@@ -5,6 +5,7 @@
   "engines": {
     "node": "22.x"
   },
+  "packageManager": "npm@11.6.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -42,6 +43,8 @@
     "@tiptap/extension-link": "^2.11.5",
     "@tiptap/react": "^2.11.5",
     "@tiptap/starter-kit": "^2.11.5",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.4",
@@ -72,6 +75,7 @@
     "@types/sanitize-html": "^2.16.2",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
+    "turbo": "^2.11.11",
     "typescript": "^5"
   }
 }

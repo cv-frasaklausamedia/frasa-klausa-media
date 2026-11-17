@@ -14,7 +14,16 @@ export function safeJsonLd(data: unknown): string {
 }
 
 /**
+ * Membersihkan string HTML menjadi teks murni agar ramah mesin pencari
+ */
+export function stripHtml(html: string | null | undefined): string {
+  if (!html) return '';
+  return html.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/**
  * Membangun Schema.org "Book" untuk halaman detail buku
+ * Mendukung Rich Results Buku Google secara lengkap
  */
 export function buildBookJsonLd(book: BookDetail, baseUrl: string) {
   const effectivePrice =
@@ -26,6 +35,7 @@ export function buildBookJsonLd(book: BookDetail, baseUrl: string) {
       : book.price_regular;
 
   const bookUrl = `${baseUrl}/buku/${book.slug}`;
+  const cleanSynopsis = book.seo_description || stripHtml(book.description) || undefined;
 
   const schema: Record<string, unknown> = {
     '@context': 'https://schema.org',
@@ -33,26 +43,50 @@ export function buildBookJsonLd(book: BookDetail, baseUrl: string) {
     name: book.title,
     url: bookUrl,
     inLanguage: 'id',
+    bookFormat: 'https://schema.org/Paperback',
     author: {
       '@type': 'Person',
       name: book.author,
+      jobTitle: 'Penulis',
+      ...(book.author_bio ? { description: book.author_bio } : {}),
     },
     publisher: {
       '@type': 'Organization',
       name: book.publisher || OFFICIAL_IDENTITY.COMPANY_NAME,
+      legalName: OFFICIAL_IDENTITY.LEGAL_NAME,
+      url: baseUrl,
+      logo: `${baseUrl}/logo/logo.jpg`,
     },
     offers: {
       '@type': 'Offer',
       price: effectivePrice,
       priceCurrency: 'IDR',
       availability: 'https://schema.org/InStock',
+      itemCondition: 'https://schema.org/NewCondition',
       url: bookUrl,
       seller: {
         '@type': 'Organization',
         name: OFFICIAL_IDENTITY.COMPANY_NAME,
+        url: baseUrl,
       },
     },
   };
+
+  if (cleanSynopsis) {
+    schema.description = cleanSynopsis;
+  }
+
+  if (book.category_name) {
+    schema.genre = book.category_name;
+  }
+
+  if (book.editor && book.editor.trim() !== '') {
+    schema.editor = {
+      '@type': 'Person',
+      name: book.editor.trim(),
+      jobTitle: 'Editor',
+    };
+  }
 
   if (book.isbn && book.isbn.trim() !== '') {
     schema.isbn = book.isbn.trim();
@@ -70,11 +104,190 @@ export function buildBookJsonLd(book: BookDetail, baseUrl: string) {
     schema.image = book.cover_url;
   }
 
-  if (book.seo_description) {
-    schema.description = book.seo_description;
-  }
-
   return schema;
+}
+
+/**
+ * Membangun Schema.org "ProfessionalService" & "OfferCatalog" untuk Layanan Penerbitan
+ */
+export function buildPublishingServicesJsonLd(baseUrl: string) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ProfessionalService',
+    name: `${OFFICIAL_IDENTITY.COMPANY_NAME} — Layanan Penerbitan Buku & Media Literasi`,
+    legalName: OFFICIAL_IDENTITY.LEGAL_NAME,
+    url: `${baseUrl}/tentang-kami#layanan`,
+    telephone: `+${OFFICIAL_IDENTITY.WHATSAPP}`,
+    image: `${baseUrl}/logo/logo.jpg`,
+    priceRange: '$$',
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: OFFICIAL_IDENTITY.ADDRESS,
+      addressCountry: 'ID',
+    },
+    areaServed: {
+      '@type': 'Country',
+      name: 'Indonesia',
+    },
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: 'Layanan Penerbitan & Ekosistem Redaksi Frasa Klausa Media',
+      itemListElement: [
+        {
+          '@type': 'Offer',
+          itemOffered: {
+            '@type': 'Service',
+            name: 'Penerbitan Buku Ber-ISBN & QRCBN Resmi',
+            description:
+              'Layanan legalitas naskah resmi ke Perpustakaan Nasional RI (Perpusnas), pengadaan barcode standar internasional, hingga deposit karya cetak nasional.',
+            serviceType: 'Penerbitan Buku Ber-ISBN',
+            provider: {
+              '@type': 'Organization',
+              name: OFFICIAL_IDENTITY.COMPANY_NAME,
+            },
+          },
+        },
+        {
+          '@type': 'Offer',
+          itemOffered: {
+            '@type': 'Service',
+            name: 'Editorial & Penyuntingan Naskah Profesional',
+            description:
+              'Penyuntingan substantif (developmental editing), copyediting kaidah EYD V & KBBI, serta proofreading akhir bebas salah ketik.',
+            serviceType: 'Penyuntingan Naskah Buku',
+            provider: {
+              '@type': 'Organization',
+              name: OFFICIAL_IDENTITY.COMPANY_NAME,
+            },
+          },
+        },
+        {
+          '@type': 'Offer',
+          itemOffered: {
+            '@type': 'Service',
+            name: 'Desain Sampul Artistik & Tata Letak Interior Buku (Typesetting)',
+            description:
+              'Perancangan visual sampul artistik eksklusif serta penataan tata letak interior (typesetting InDesign) ergonomis dan ramah mata.',
+            serviceType: 'Desain Cover & Layout Buku',
+            provider: {
+              '@type': 'Organization',
+              name: OFFICIAL_IDENTITY.COMPANY_NAME,
+            },
+          },
+        },
+        {
+          '@type': 'Offer',
+          itemOffered: {
+            '@type': 'Service',
+            name: 'Percetakan POD & Cetak Massal',
+            description:
+              'Layanan cetak presisi material Bookpaper/HVS, softcover/hardcover, laminasi doff/glossy/emboss, mulai dari POD 10 eks hingga cetak massal offset.',
+            serviceType: 'Percetakan Buku Berkualitas',
+            provider: {
+              '@type': 'Organization',
+              name: OFFICIAL_IDENTITY.COMPANY_NAME,
+            },
+          },
+        },
+        {
+          '@type': 'Offer',
+          itemOffered: {
+            '@type': 'Service',
+            name: 'Konversi E-Book & Distribusi Multi-Platform',
+            description:
+              'Konversi format e-book EPUB & PDF Interaktif untuk Google Play Books serta pemasaran fisik di etalase resmi Shopee dan Tokopedia.',
+            serviceType: 'Distribusi E-Book & Penjualan Buku',
+            provider: {
+              '@type': 'Organization',
+              name: OFFICIAL_IDENTITY.COMPANY_NAME,
+            },
+          },
+        },
+        {
+          '@type': 'Offer',
+          itemOffered: {
+            '@type': 'Service',
+            name: 'Ghostwriting, Biografi & Buku Lembaga',
+            description:
+              'Pendampingan penulisan biografi tokoh, memoar, buku profil sekolah/perusahaan, hingga konversi tesis/disertasi menjadi buku populer.',
+            serviceType: 'Jasa Penulisan Buku & Biografi',
+            provider: {
+              '@type': 'Organization',
+              name: OFFICIAL_IDENTITY.COMPANY_NAME,
+            },
+          },
+        },
+      ],
+    },
+  };
+}
+
+/**
+ * Membangun Schema.org "AboutPage" untuk halaman Tentang Kami
+ */
+export function buildAboutPageJsonLd(
+  baseUrl: string,
+  about?: { title?: string; subtitle?: string; vision?: string; history?: string }
+) {
+  const pageUrl = `${baseUrl}/tentang-kami`;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    name: about?.title || `Tentang ${OFFICIAL_IDENTITY.COMPANY_NAME}`,
+    description:
+      about?.subtitle ||
+      'Mengenal visi, misi, sejarah, nilai, dan layanan penerbitan buku profesional CV. Frasa Klausa Media.',
+    url: pageUrl,
+    inLanguage: 'id',
+    mainEntity: {
+      '@type': 'Organization',
+      name: OFFICIAL_IDENTITY.COMPANY_NAME,
+      legalName: OFFICIAL_IDENTITY.LEGAL_NAME,
+      url: baseUrl,
+      logo: `${baseUrl}/logo/logo.jpg`,
+      description: OFFICIAL_IDENTITY.TAGLINE,
+    },
+  };
+}
+
+/**
+ * Membangun Schema.org "ItemList" untuk halaman katalog, kategori, dan daftar blog
+ */
+export function buildItemListJsonLd(
+  items: Array<{ name: string; url: string; image?: string | null; author?: string }>,
+  baseUrl: string,
+  listName: string
+) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: listName,
+    numberOfItems: items.length,
+    itemListElement: items.map((item, idx) => {
+      const fullUrl = item.url.startsWith('http') ? item.url : `${baseUrl}${item.url}`;
+      return {
+        '@type': 'ListItem',
+        position: idx + 1,
+        url: fullUrl,
+        name: item.name,
+        ...(item.image ? { image: item.image } : {}),
+        ...(item.author
+          ? {
+              item: {
+                '@type': 'Book',
+                name: item.name,
+                url: fullUrl,
+                author: {
+                  '@type': 'Person',
+                  name: item.author,
+                },
+                ...(item.image ? { image: item.image } : {}),
+              },
+            }
+          : {}),
+      };
+    }),
+  };
 }
 
 /**
@@ -82,6 +295,7 @@ export function buildBookJsonLd(book: BookDetail, baseUrl: string) {
  */
 export function buildArticleJsonLd(post: PostDetail, baseUrl: string) {
   const articleUrl = `${baseUrl}/blog/${post.slug}`;
+  const cleanDescription = post.seo_description || post.excerpt || stripHtml(post.content).slice(0, 160);
 
   const schema: Record<string, unknown> = {
     '@context': 'https://schema.org',
@@ -97,20 +311,26 @@ export function buildArticleJsonLd(post: PostDetail, baseUrl: string) {
       {
         '@type': 'Person',
         name: post.author_name || OFFICIAL_IDENTITY.COMPANY_NAME,
+        jobTitle: 'Penulis Artikel',
       },
     ],
     publisher: {
       '@type': 'Organization',
       name: OFFICIAL_IDENTITY.COMPANY_NAME,
+      legalName: OFFICIAL_IDENTITY.LEGAL_NAME,
       logo: {
         '@type': 'ImageObject',
-        url: `${baseUrl}/logo/logo.png`,
+        url: `${baseUrl}/logo/logo.jpg`,
       },
     },
   };
 
-  if (post.seo_description || post.excerpt) {
-    schema.description = post.seo_description || post.excerpt;
+  if (cleanDescription) {
+    schema.description = cleanDescription;
+  }
+
+  if (post.category?.name) {
+    schema.articleSection = post.category.name;
   }
 
   if (post.cover_url) {
@@ -144,7 +364,7 @@ export function buildOrganizationJsonLd(baseUrl: string) {
     name: OFFICIAL_IDENTITY.COMPANY_NAME,
     legalName: OFFICIAL_IDENTITY.LEGAL_NAME,
     url: baseUrl,
-    logo: `${baseUrl}/logo/logo.png`,
+    logo: `${baseUrl}/logo/logo.jpg`,
     description: OFFICIAL_IDENTITY.TAGLINE,
     contactPoint: {
       '@type': 'ContactPoint',

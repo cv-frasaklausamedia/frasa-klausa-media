@@ -12,6 +12,8 @@ import { OFFICIAL_IDENTITY } from '@/constants';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { JsonLd } from '@/components/public/json-ld';
+import { buildBreadcrumbJsonLd, buildItemListJsonLd } from '@/lib/seo/json-ld';
 import { getFallbackOpenGraphImage } from '@/lib/seo/open-graph';
 import BlogLoadingFallback from './loading';
 
@@ -40,9 +42,21 @@ export async function generateMetadata({ searchParams }: BlogPageProps): Promise
     'Kumpulan artikel sastra, wawasan penerbitan buku, tips menulis, dan kabar kegiatan literasi terkini dari Frasa Klausa Media.';
   const image = getFallbackOpenGraphImage('Blog Frasa Klausa Media');
 
+  const keywords = [
+    'blog literasi',
+    'artikel sastra',
+    'tips menulis novel',
+    'dunia kepenulisan',
+    'ulasan buku',
+    'kabar literasi indonesia',
+    'penerbit frasa klausa media',
+    OFFICIAL_IDENTITY.COMPANY_NAME,
+  ];
+
   return {
     title,
     description,
+    keywords,
     alternates: {
       canonical: '/blog',
     },
@@ -82,8 +96,31 @@ async function BlogContent({ searchParams }: BlogPageProps) {
     (c) => c.slug === queryParams.kategori || c.id === queryParams.kategori
   );
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://frasaklausamedia.com';
+  const cleanBaseUrl = baseUrl.replace(/\/+$/, '');
+
+  const breadcrumbItems = [
+    { name: 'Beranda', url: '/' },
+    { name: 'Blog Literasi', url: '/blog' },
+    ...(activeCategory ? [{ name: activeCategory.name, url: `/blog?kategori=${activeCategory.slug}` }] : []),
+  ];
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd(breadcrumbItems, cleanBaseUrl);
+
+  const itemListJsonLd = buildItemListJsonLd(
+    posts.map((p) => ({
+      name: p.title,
+      url: `/blog/${p.slug}`,
+      image: p.cover_url,
+      author: p.author_name,
+    })),
+    cleanBaseUrl,
+    activeCategory ? `Artikel Blog: ${activeCategory.name}` : 'Blog Literasi Frasa Klausa Media'
+  );
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+      <JsonLd data={breadcrumbJsonLd} />
+      <JsonLd data={itemListJsonLd} />
       {/* 1. Header & Breadcrumb */}
       <div className="space-y-3">
         <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-muted-foreground">

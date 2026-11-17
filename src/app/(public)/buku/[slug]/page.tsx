@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ChevronRight, Sparkles, User, Calendar, Hash, FileText, Building2 } from 'lucide-react';
+import { ChevronRight, Sparkles, User, Calendar, Hash, FileText, Building2, BookOpen } from 'lucide-react';
 import { getPublicBookBySlug, getRelatedBooks } from '@/lib/books/data-access';
 import { BookGallery } from '@/components/public/book-gallery';
 import { CheckoutActions } from '@/components/public/checkout-actions';
@@ -39,9 +39,27 @@ export async function generateMetadata({ params }: BookDetailPageProps): Promise
     `Pesan buku ${book.title} karya ${book.author} seharga ${formatRupiah(effectivePrice)} terbitan ${book.publisher}.`;
   const image = getOpenGraphImage({ sourceUrl: book.cover_url, alt: book.title });
 
+  const keywords = [
+    book.title,
+    `buku ${book.title}`,
+    `novel ${book.title}`,
+    book.author,
+    `karya ${book.author}`,
+    `penulis ${book.author}`,
+    book.category_name,
+    `buku ${book.category_name}`,
+    `penerbit ${book.publisher}`,
+    ...(book.isbn ? [`isbn ${book.isbn}`, book.isbn] : []),
+    ...(book.editor ? [`editor ${book.editor}`] : []),
+    'beli buku online',
+    'buku sastra indonesia',
+    OFFICIAL_IDENTITY.COMPANY_NAME,
+  ].filter(Boolean);
+
   return {
     title,
     description,
+    keywords,
     alternates: {
       canonical: `/buku/${slug}`,
     },
@@ -51,6 +69,10 @@ export async function generateMetadata({ params }: BookDetailPageProps): Promise
       title: `${book.title} — ${book.author}`,
       description,
       images: [image],
+      authors: [book.author],
+      isbn: book.isbn || undefined,
+      releaseDate: book.publish_year ? String(book.publish_year) : undefined,
+      tags: [book.category_name, book.author, book.publisher].filter(Boolean),
     },
     twitter: {
       card: 'summary_large_image',
@@ -103,7 +125,11 @@ async function BookDetailContent({ params }: BookDetailPageProps) {
   );
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-12">
+    <article
+      itemScope
+      itemType="https://schema.org/Book"
+      className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-12"
+    >
       <JsonLd data={bookJsonLd} />
       <JsonLd data={breadcrumbJsonLd} />
       {/* 1. Breadcrumb Navigasi */}
@@ -155,12 +181,26 @@ async function BookDetailContent({ params }: BookDetailPageProps) {
             </div>
 
             {/* Heading Tunggal H1 */}
-            <h1 className="text-3xl sm:text-4xl font-serif font-bold tracking-tight text-foreground leading-tight pt-1">
+            <h1
+              itemProp="name"
+              className="text-3xl sm:text-4xl font-serif font-bold tracking-tight text-foreground leading-tight pt-1"
+            >
               {book.title}
             </h1>
 
-            <p className="text-base text-muted-foreground font-serif italic">
-              Karya <span className="font-sans not-italic font-semibold text-foreground">{book.author}</span>
+            <p
+              itemProp="author"
+              itemScope
+              itemType="https://schema.org/Person"
+              className="text-base text-muted-foreground font-serif italic"
+            >
+              Karya{' '}
+              <span
+                itemProp="name"
+                className="font-sans not-italic font-semibold text-foreground"
+              >
+                {book.author}
+              </span>
             </p>
           </div>
 
@@ -237,7 +277,9 @@ async function BookDetailContent({ params }: BookDetailPageProps) {
                   <Building2 className="h-3.5 w-3.5" />
                   <span>Penerbit</span>
                 </div>
-                <p className="font-semibold text-foreground truncate">{book.publisher}</p>
+                <p itemProp="publisher" className="font-semibold text-foreground truncate">
+                  {book.publisher}
+                </p>
               </div>
 
               <div className="rounded-lg border bg-card p-3 space-y-1">
@@ -245,7 +287,9 @@ async function BookDetailContent({ params }: BookDetailPageProps) {
                   <Calendar className="h-3.5 w-3.5" />
                   <span>Tahun Terbit</span>
                 </div>
-                <p className="font-semibold text-foreground">{book.publish_year}</p>
+                <p itemProp="datePublished" className="font-semibold text-foreground">
+                  {book.publish_year}
+                </p>
               </div>
 
               <div className="rounded-lg border bg-card p-3 space-y-1">
@@ -253,8 +297,20 @@ async function BookDetailContent({ params }: BookDetailPageProps) {
                   <FileText className="h-3.5 w-3.5" />
                   <span>Halaman</span>
                 </div>
-                <p className="font-semibold text-foreground">{book.page_count} hlm</p>
+                <p itemProp="numberOfPages" className="font-semibold text-foreground">
+                  {book.page_count} hlm
+                </p>
               </div>
+
+              {book.dimension && (
+                <div className="rounded-lg border bg-card p-3 space-y-1">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <BookOpen className="h-3.5 w-3.5" />
+                    <span>Ukuran Buku</span>
+                  </div>
+                  <p className="font-semibold text-foreground truncate">{book.dimension}</p>
+                </div>
+              )}
 
               {book.isbn && (
                 <div className="rounded-lg border bg-card p-3 space-y-1">
@@ -262,7 +318,9 @@ async function BookDetailContent({ params }: BookDetailPageProps) {
                     <Hash className="h-3.5 w-3.5" />
                     <span>ISBN</span>
                   </div>
-                  <p className="font-semibold font-mono text-foreground">{book.isbn}</p>
+                  <p itemProp="isbn" className="font-semibold font-mono text-foreground">
+                    {book.isbn}
+                  </p>
                 </div>
               )}
             </div>
@@ -277,6 +335,7 @@ async function BookDetailContent({ params }: BookDetailPageProps) {
         </h2>
         {book.description ? (
           <div
+            itemProp="description"
             className="prose prose-stone dark:prose-invert max-w-none text-foreground/90 leading-relaxed text-base"
             dangerouslySetInnerHTML={{ __html: book.description }}
           />
@@ -287,7 +346,35 @@ async function BookDetailContent({ params }: BookDetailPageProps) {
         )}
       </div>
 
-      {/* 4. Rekomendasi Buku Terkait */}
+      {/* 4. Tentang Penulis */}
+      {book.author_bio && (
+        <div className="border-t pt-10 space-y-6">
+          <div className="flex items-center gap-2">
+            <User className="h-5 w-5 text-primary" />
+            <h2 className="text-2xl font-serif font-bold text-foreground">
+              Tentang Penulis
+            </h2>
+          </div>
+          <div
+            itemProp="author"
+            itemScope
+            itemType="https://schema.org/Person"
+            className="rounded-xl border bg-card/60 p-6 space-y-2"
+          >
+            <h3 itemProp="name" className="font-semibold text-lg text-foreground">
+              {book.author}
+            </h3>
+            <p
+              itemProp="description"
+              className="text-muted-foreground leading-relaxed whitespace-pre-line text-sm sm:text-base"
+            >
+              {book.author_bio}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Rekomendasi Buku Terkait */}
       {relatedBooks.length > 0 && (
         <div className="border-t pt-10 space-y-6">
           <div className="flex items-center justify-between">
@@ -311,7 +398,7 @@ async function BookDetailContent({ params }: BookDetailPageProps) {
           </div>
         </div>
       )}
-    </div>
+    </article>
   );
 }
 

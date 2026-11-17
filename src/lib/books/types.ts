@@ -42,6 +42,8 @@ export interface BookDetail extends BookListItem {
   whatsapp_message_template: string | null;
   seo_title: string | null;
   seo_description: string | null;
+  author_bio: string | null;
+  dimension: string | null;
   gallery: BookGalleryItem[];
   related_book_ids: string[];
 }

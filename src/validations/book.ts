@@ -405,6 +405,22 @@ const baseBookFormSchema = z.object({
     .int('Jumlah halaman harus berupa bilangan bulat')
     .positive('Jumlah halaman harus lebih dari 0'),
 
+  dimension: z
+    .string()
+    .trim()
+    .max(50, 'Ukuran buku maksimal 50 karakter')
+    .nullable()
+    .optional()
+    .transform((val) => (val && val.length > 0 ? val : null)),
+
+  author_bio: z
+    .string()
+    .trim()
+    .max(5000, 'Tentang penulis maksimal 5.000 karakter')
+    .nullable()
+    .optional()
+    .transform((val) => (val && val.length > 0 ? val : null)),
+
   price_regular: z.coerce
     .number({ required_error: 'Harga normal wajib diisi' })
     .min(0, 'Harga normal tidak boleh negatif'),

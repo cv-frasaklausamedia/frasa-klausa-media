@@ -8,7 +8,7 @@ import { publicCatalogQuerySchema } from '@/validations/book';
 import { BookCard } from '@/components/public/book-card';
 import { Pagination } from '@/components/public/pagination';
 import { JsonLd } from '@/components/public/json-ld';
-import { buildBreadcrumbJsonLd } from '@/lib/seo/json-ld';
+import { buildBreadcrumbJsonLd, buildItemListJsonLd } from '@/lib/seo/json-ld';
 import { OFFICIAL_IDENTITY } from '@/constants';
 import { getFallbackOpenGraphImage } from '@/lib/seo/open-graph';
 
@@ -46,9 +46,20 @@ export async function generateMetadata({
     `Temukan seluruh buku berkualitas kategori ${category.name} terbitan Frasa Klausa Media.`;
   const image = getFallbackOpenGraphImage(category.name);
 
+  const keywords = [
+    `buku ${category.name}`,
+    `kategori ${category.name}`,
+    `novel ${category.name}`,
+    'katalog buku',
+    'beli buku online',
+    'penerbit frasa klausa media',
+    OFFICIAL_IDENTITY.COMPANY_NAME,
+  ];
+
   return {
     title,
     description,
+    keywords,
     alternates: {
       canonical: `/kategori/${slug}`,
     },
@@ -90,18 +101,31 @@ async function CategoryContent({ params, searchParams }: CategoryPageProps) {
   const { items: books, totalCount, page, pageCount } = booksResponse;
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://frasaklausamedia.com';
+  const cleanBaseUrl = baseUrl.replace(/\/+$/, '');
   const breadcrumbJsonLd = buildBreadcrumbJsonLd(
     [
       { name: 'Beranda', url: '/' },
       { name: 'Katalog Buku', url: '/katalog' },
       { name: category.name, url: `/kategori/${category.slug}` },
     ],
-    baseUrl
+    cleanBaseUrl
+  );
+
+  const itemListJsonLd = buildItemListJsonLd(
+    books.map((b) => ({
+      name: b.title,
+      url: `/buku/${b.slug}`,
+      image: b.cover_url,
+      author: b.author,
+    })),
+    cleanBaseUrl,
+    `Katalog Buku: ${category.name}`
   );
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
       <JsonLd data={breadcrumbJsonLd} />
+      <JsonLd data={itemListJsonLd} />
       {/* 1. Breadcrumb */}
       <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <Link href="/" className="hover:text-foreground transition-colors">

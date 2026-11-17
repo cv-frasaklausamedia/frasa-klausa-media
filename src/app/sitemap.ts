@@ -16,11 +16,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const supabase = createPublicClient();
     const nowIso = now.toISOString();
 
-    // 2. Ambil seluruh data dinamis terpublikasi secara paralel
+    // 2. Ambil seluruh data dinamis terpublikasi secara paralel dengan gambar sampul
     const [booksRes, categoriesRes, postsRes] = await Promise.all([
       supabase
         .from('books')
-        .select('slug, updated_at, created_at')
+        .select('slug, cover_url, updated_at, created_at')
         .eq('is_published', true)
         .order('created_at', { ascending: false }),
       supabase
@@ -29,7 +29,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .order('created_at', { ascending: false }),
       supabase
         .from('posts')
-        .select('slug, updated_at, published_at')
+        .select('slug, cover_url, updated_at, published_at')
         .eq('status', 'published')
         .lte('published_at', nowIso)
         .order('published_at', { ascending: false }),
