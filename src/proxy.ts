@@ -15,7 +15,7 @@ import { getSafeRedirectUrl } from '@/lib/redirect-validator';
  * status keaktifan akun (is_active), dan hak akses (role) tetap diverifikasi
  * secara ketat pada Server Components, Server Actions, dan Data Access Layer.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { supabaseResponse, user } = await updateSession(request);
   const pathname = request.nextUrl.pathname;
 

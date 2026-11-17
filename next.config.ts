@@ -10,8 +10,8 @@ const cspDirectives = [
   // 1. Fallback default: hanya izinkan resource dari origin aplikasi sendiri
   "default-src 'self'",
 
-  // 2. Script: Izinkan self dan inline script Next.js; unsafe-eval HANYA untuk dev Turbopack/HMR
-  `script-src 'self' 'unsafe-inline'${isProd ? '' : " 'unsafe-eval'"}`,
+  // 2. Script: Izinkan self dan inline script Next.js; unsafe-eval HANYA untuk dev Turbopack/HMR; Izinkan Vercel Analytics script
+  `script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com${isProd ? '' : " 'unsafe-eval'"}`,
 
   // 3. Stylesheet: Izinkan Tailwind CSS inline styles dan stylesheet Google Fonts
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
@@ -22,8 +22,8 @@ const cspDirectives = [
   // 5. Font: Izinkan file font dari self, data URI, dan server Google Fonts (gstatic)
   "font-src 'self' data: https://fonts.gstatic.com",
 
-  // 6. Network Connections: Izinkan REST API Supabase dan WebSocket Supabase Realtime
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  // 6. Network Connections: Izinkan REST API Supabase, WebSocket Supabase Realtime, dan Vercel Speed Insights / Analytics
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://vitals.vercel-insights.com https://*.vercel-insights.com",
 
   // 7. Frames: Izinkan penyematan iframe responsif Google Maps (PRD §10.11 / Keputusan #3)
   "frame-src 'self' https://www.google.com https://maps.google.com",

@@ -87,11 +87,13 @@ describe('Progressive Web App (PWA) Implementation Suite', () => {
     assert.ok(headersMap.get('content-type')?.includes('application/javascript'));
   });
 
-  it('src/middleware.ts mengecualikan manifest dan sw.js dari pemeriksaan sesi Edge', () => {
-    const middlewarePath = path.resolve(process.cwd(), 'src/middleware.ts');
-    const content = fs.readFileSync(middlewarePath, 'utf8');
+  it('src/proxy.ts (atau src/middleware.ts) mengecualikan manifest dan sw.js dari pemeriksaan sesi Edge', () => {
+    const proxyPath = path.resolve(process.cwd(), 'src/proxy.ts');
+    const legacyPath = path.resolve(process.cwd(), 'src/middleware.ts');
+    const targetPath = fs.existsSync(proxyPath) ? proxyPath : legacyPath;
+    const content = fs.readFileSync(targetPath, 'utf8');
 
-    assert.ok(content.includes('manifest'), 'Middleware harus mengecualikan manifest');
-    assert.ok(content.includes('sw'), 'Middleware harus mengecualikan sw.js');
+    assert.ok(content.includes('manifest'), 'Proxy/Middleware harus mengecualikan manifest');
+    assert.ok(content.includes('sw'), 'Proxy/Middleware harus mengecualikan sw.js');
   });
 });
